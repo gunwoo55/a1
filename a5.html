@@ -9,7 +9,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <title>FINE U - 등급 메뉴 (실시간 모의투자)</title>
+    <title>FINE U - 등급 메뉴 (모의투자)</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -176,8 +176,8 @@
                 <h1 class="text-xl font-bold">등급 메뉴</h1>
                 <div class="flex items-center justify-center text-xs">
                     <span class="real-time-indicator"></span>
-                    <span class="text-green-600 mr-1">실시간</span>
-                    <span class="text-gray-500" id="currentTime">12:05:20</span>
+                    <span class="text-green-600 mr-1">LIVE</span>
+                    <span class="text-gray-500" id="currentTime">12:14:45</span>
                     <span class="api-status api-live" id="apiStatus">API 연결됨</span>
                 </div>
             </div>
@@ -188,7 +188,7 @@
     </div>
 
     <div class="max-w-md mx-auto px-4 py-6">
-        <!-- 현재 등급 표시 (실시간 업데이트) -->
+        <!-- 현재 등급 표시 -->
         <div class="bg-white rounded-2xl p-6 card-shadow mb-6">
             <div class="text-center mb-4">
                 <div id="currentLevelBadge" class="inline-block px-6 py-3 rounded-full text-white font-bold text-lg level-yellow">
@@ -205,10 +205,10 @@
                     <div id="expBar" class="bg-blue-500 rounded-full h-2" style="width: 0%"></div>
                 </div>
             </div>
-            <!-- 실시간 가상 자산 표시 -->
+            <!-- 가상 자산 표시 -->
             <div class="bg-blue-50 rounded-lg p-3">
                 <div class="flex justify-between text-sm">
-                    <span class="text-gray-600">실시간 가상 자산</span>
+                    <span class="text-gray-600">가상 자산</span>
                     <span class="font-bold text-blue-600 price-update" id="virtualBalance">1,000,000원</span>
                 </div>
                 <div class="flex justify-between text-xs mt-1">
@@ -218,28 +218,28 @@
             </div>
         </div>
 
-        <!-- 실시간 가계부 섹션 -->
+        <!-- 가계부 섹션 -->
         <div class="bg-white rounded-2xl p-6 card-shadow mb-6">
             <h2 class="text-xl font-bold mb-4">
-                <i class="fas fa-wallet text-blue-500 mr-2"></i>실시간 가계부
+                <i class="fas fa-wallet text-blue-500 mr-2"></i>가계부
                 <span class="real-time-indicator ml-2"></span>
             </h2>
             
-            <!-- 이번 달 요약 (실시간 계산) -->
+            <!-- 이번 달 요약 -->
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div class="bg-green-50 rounded-lg p-4 text-center">
                     <i class="fas fa-arrow-up text-green-500 text-xl mb-2"></i>
-                    <p class="text-sm text-gray-600">실시간 수입</p>
+                    <p class="text-sm text-gray-600">수입</p>
                     <p class="text-lg font-bold text-green-600 price-update" id="totalIncome">0원</p>
                 </div>
                 <div class="bg-red-50 rounded-lg p-4 text-center">
                     <i class="fas fa-arrow-down text-red-500 text-xl mb-2"></i>
-                    <p class="text-sm text-gray-600">실시간 지출</p>
+                    <p class="text-sm text-gray-600">지출</p>
                     <p class="text-lg font-bold text-red-600 price-update" id="totalExpense">0원</p>
                 </div>
             </div>
             
-            <!-- 실시간 가계부 차트 -->
+            <!-- 가계부 차트 -->
             <div class="chart-container mb-4">
                 <canvas id="budgetChart"></canvas>
             </div>
@@ -254,19 +254,19 @@
                 </button>
             </div>
             
-            <!-- 실시간 최근 내역 -->
+            <!-- 최근 내역 -->
             <div>
-                <h3 class="font-semibold mb-3">실시간 최근 내역</h3>
+                <h3 class="font-semibold mb-3">최근 내역</h3>
                 <div id="recentTransactions" class="space-y-2">
-                    <!-- 실시간 거래 내역이 여기에 표시됩니다 -->
+                    <!-- 거래 내역이 여기에 표시됩니다 -->
                 </div>
             </div>
         </div>
 
-        <!-- 실시간 등급별 자산운용 섹션 -->
+        <!-- 등급별 자산운용 섹션 -->
         <div class="bg-white rounded-2xl p-6 card-shadow mb-6">
             <h2 class="text-xl font-bold mb-4">
-                <i class="fas fa-chart-pie text-purple-500 mr-2"></i>실시간 자산운용
+                <i class="fas fa-chart-pie text-purple-500 mr-2"></i>자산운용
                 <span class="real-time-indicator ml-2"></span>
             </h2>
             <p class="text-sm text-gray-500 mb-6">등급이 높아질수록 더 많은 투자 상품을 이용할 수 있습니다</p>
@@ -280,12 +280,12 @@
                             <div>
                                 <p class="font-semibold">예적금</p>
                                 <p class="text-sm text-gray-500">안전한 저축 상품</p>
-                                <p class="text-xs text-blue-500 font-semibold">실시간 보유: <span id="depositHolding" class="price-update">0원</span></p>
+                                <p class="text-xs text-blue-500 font-semibold">보유: <span id="depositHolding" class="price-update">0원</span></p>
                             </div>
                         </div>
                         <div class="text-right">
                             <span class="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">이용 가능</span>
-                            <p class="text-xs text-gray-500 mt-1">실시간 금리: <span id="depositRate">3.5%</span></p>
+                            <p class="text-xs text-gray-500 mt-1">금리: <span id="depositRate">3.5%</span></p>
                         </div>
                     </div>
                 </div>
@@ -298,7 +298,7 @@
                             <div>
                                 <p class="font-semibold">주식</p>
                                 <p class="text-sm text-gray-500">국내외 주식 투자</p>
-                                <p class="text-xs text-blue-500 font-semibold">실시간 보유: <span id="stockHolding" class="price-update">0원</span></p>
+                                <p class="text-xs text-blue-500 font-semibold">보유: <span id="stockHolding" class="price-update">0원</span></p>
                             </div>
                         </div>
                         <div class="text-right">
@@ -316,7 +316,7 @@
                             <div>
                                 <p class="font-semibold">채권</p>
                                 <p class="text-sm text-gray-500">안정적인 수익</p>
-                                <p class="text-xs text-blue-500 font-semibold">실시간 보유: <span id="bondHolding" class="price-update">0원</span></p>
+                                <p class="text-xs text-blue-500 font-semibold">보유: <span id="bondHolding" class="price-update">0원</span></p>
                             </div>
                         </div>
                         <div class="text-right">
@@ -334,7 +334,7 @@
                             <div>
                                 <p class="font-semibold">ETF/펀드</p>
                                 <p class="text-sm text-gray-500">분산 투자 상품</p>
-                                <p class="text-xs text-blue-500 font-semibold">실시간 보유: <span id="etfHolding" class="price-update">0원</span></p>
+                                <p class="text-xs text-blue-500 font-semibold">보유: <span id="etfHolding" class="price-update">0원</span></p>
                             </div>
                         </div>
                         <div class="text-right">
@@ -352,7 +352,7 @@
                             <div>
                                 <p class="font-semibold">암호화폐</p>
                                 <p class="text-sm text-gray-500">디지털 자산</p>
-                                <p class="text-xs text-blue-500 font-semibold">실시간 보유: <span id="cryptoHolding" class="price-update">0원</span></p>
+                                <p class="text-xs text-blue-500 font-semibold">보유: <span id="cryptoHolding" class="price-update">0원</span></p>
                             </div>
                         </div>
                         <div class="text-right">
@@ -370,7 +370,7 @@
                             <div>
                                 <p class="font-semibold">귀금속/원자재</p>
                                 <p class="text-sm text-gray-500">실물 투자</p>
-                                <p class="text-xs text-blue-500 font-semibold">실시간 보유: <span id="commodityHolding" class="price-update">0원</span></p>
+                                <p class="text-xs text-blue-500 font-semibold">보유: <span id="commodityHolding" class="price-update">0원</span></p>
                             </div>
                         </div>
                         <div class="text-right">
@@ -384,32 +384,32 @@
     </div>
 </div>
 
-<!-- 실시간 포트폴리오 모달 -->
+<!-- 포트폴리오 모달 -->
 <div id="portfolioModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-2xl w-full max-w-lg modal-content">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold">실시간 포트폴리오</h3>
+                    <h3 class="text-xl font-bold">내 포트폴리오</h3>
                     <button onclick="hidePortfolioModal()" class="text-gray-500">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 
-                <!-- 실시간 총 자산 현황 -->
+                <!-- 총 자산 현황 -->
                 <div class="bg-gray-50 rounded-lg p-4 mb-6">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="text-center">
-                            <p class="text-sm text-gray-600">실시간 총 투자금액</p>
+                            <p class="text-sm text-gray-600">총 투자금액</p>
                             <p class="text-lg font-bold price-update" id="totalInvestment">0원</p>
                         </div>
                         <div class="text-center">
-                            <p class="text-sm text-gray-600">실시간 평가손익</p>
+                            <p class="text-sm text-gray-600">평가손익</p>
                             <p class="text-lg font-bold price-update" id="totalProfit">0원</p>
                         </div>
                     </div>
                     <div class="text-center mt-3">
-                        <p class="text-sm text-gray-600">실시간 수익률</p>
+                        <p class="text-sm text-gray-600">수익률</p>
                         <p class="text-xl font-bold price-update" id="totalReturn">0%</p>
                     </div>
                     <div class="text-center mt-2">
@@ -417,14 +417,14 @@
                     </div>
                 </div>
                 
-                <!-- 실시간 포트폴리오 차트 -->
+                <!-- 포트폴리오 차트 -->
                 <div class="portfolio-chart mb-6">
                     <canvas id="portfolioChart"></canvas>
                 </div>
                 
-                <!-- 실시간 보유 자산 목록 -->
+                <!-- 보유 자산 목록 -->
                 <div>
-                    <h4 class="font-semibold mb-3">실시간 보유 자산 현황</h4>
+                    <h4 class="font-semibold mb-3">보유 자산 현황</h4>
                     <div id="portfolioList" class="space-y-2 max-h-64 overflow-y-auto">
                         <!-- 포트폴리오 항목들이 여기에 표시됩니다 -->
                     </div>
@@ -434,28 +434,28 @@
     </div>
 </div>
 
-<!-- 실시간 투자 모달 -->
+<!-- 투자 모달 -->
 <div id="investmentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-2xl w-full max-w-lg modal-content">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold" id="investmentTitle">실시간 투자 상품</h3>
+                    <h3 class="text-xl font-bold" id="investmentTitle">투자 상품</h3>
                     <button onclick="hideInvestmentModal()" class="text-gray-500">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 
-                <!-- 실시간 시장 상황 표시 -->
+                <!-- 시장 상황 표시 -->
                 <div class="bg-blue-50 rounded-lg p-3 mb-4">
                     <div class="flex items-center justify-center">
                         <span class="real-time-indicator"></span>
-                        <span class="text-sm text-blue-600 font-semibold">실시간 시장 데이터</span>
-                        <span class="text-xs text-gray-500 ml-2" id="marketUpdateTime">12:05:20</span>
+                        <span class="text-sm text-blue-600 font-semibold">시장 데이터</span>
+                        <span class="text-xs text-gray-500 ml-2" id="marketUpdateTime">12:14:45</span>
                     </div>
                 </div>
                 
-                <!-- 실시간 투자 상품 목록 -->
+                <!-- 투자 상품 목록 -->
                 <div id="investmentProductList" class="space-y-3 mb-6 max-h-80 overflow-y-auto">
                     <!-- 투자 상품들이 여기에 표시됩니다 -->
                 </div>
@@ -464,36 +464,36 @@
     </div>
 </div>
 
-<!-- 매수/매도 모달 (실시간 가격) -->
+<!-- 매수/매도 모달 -->
 <div id="tradeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-2xl w-full max-w-sm modal-content">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold" id="tradeTitle">실시간 매수</h3>
+                    <h3 class="text-xl font-bold" id="tradeTitle">매수</h3>
                     <button onclick="hideTradeModal()" class="text-gray-500">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
                 
-                <!-- 실시간 상품 정보 -->
+                <!-- 상품 정보 -->
                 <div class="bg-gray-50 rounded-lg p-4 mb-6">
                     <div class="text-center">
                         <p class="font-semibold text-lg" id="tradeProductName"></p>
                         <p class="text-sm text-gray-600" id="tradeProductType"></p>
                         <p class="text-xl font-bold mt-2 price-update" id="tradeProductPrice"></p>
                         <p class="text-sm price-update" id="tradeProductChange"></p>
-                        <p class="text-xs text-gray-500 mt-1">실시간 업데이트: <span id="tradeUpdateTime">방금 전</span></p>
+                        <p class="text-xs text-gray-500 mt-1">업데이트: <span id="tradeUpdateTime">방금 전</span></p>
                     </div>
                 </div>
                 
                 <!-- 거래 탭 -->
                 <div class="grid grid-cols-2 gap-2 mb-6">
                     <button id="buyTab" onclick="switchTradeTab('buy')" class="py-2 rounded-lg bg-blue-500 text-white font-semibold">
-                        실시간 매수
+                        매수
                     </button>
                     <button id="sellTab" onclick="switchTradeTab('sell')" class="py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold">
-                        실시간 매도
+                        매도
                     </button>
                 </div>
                 
@@ -505,19 +505,19 @@
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg" oninput="updateTradeAmount()">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">예상 금액 (실시간)</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">예상 금액</label>
                         <input type="text" id="tradeAmount" readonly
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 price-update">
                     </div>
                     <div id="holdingInfo" class="text-sm text-gray-600 hidden">
-                        실시간 보유 수량: <span id="currentHolding">0</span>개
+                        보유 수량: <span id="currentHolding">0</span>개
                     </div>
                 </div>
                 
                 <!-- 거래 버튼 -->
                 <button id="tradeButton" onclick="executeTrade()" 
                         class="w-full bg-blue-500 text-white py-3 rounded-xl font-semibold">
-                    실시간 매수하기
+                    매수하기
                 </button>
             </div>
         </div>
@@ -530,7 +530,7 @@
         <div class="bg-white rounded-2xl w-full max-w-sm modal-content">
             <div class="p-6">
                 <div class="text-center mb-6">
-                    <h3 class="text-xl font-bold">실시간 수입 추가</h3>
+                    <h3 class="text-xl font-bold">수입 추가</h3>
                 </div>
                 <div class="space-y-4 mb-6">
                     <input type="text" id="incomeAmount" placeholder="금액 (원)" 
@@ -547,7 +547,7 @@
                     </button>
                     <button onclick="addIncome()" 
                             class="bg-green-500 text-white py-3 rounded-xl font-semibold">
-                        실시간 추가
+                        추가
                     </button>
                 </div>
             </div>
@@ -561,7 +561,7 @@
         <div class="bg-white rounded-2xl w-full max-w-sm modal-content">
             <div class="p-6">
                 <div class="text-center mb-6">
-                    <h3 class="text-xl font-bold">실시간 지출 추가</h3>
+                    <h3 class="text-xl font-bold">지출 추가</h3>
                 </div>
                 <div class="space-y-4 mb-6">
                     <input type="text" id="expenseAmount" placeholder="금액 (원)" 
@@ -578,7 +578,7 @@
                     </button>
                     <button onclick="addExpense()" 
                             class="bg-red-500 text-white py-3 rounded-xl font-semibold">
-                        실시간 추가
+                        지출 추가
                     </button>
                 </div>
             </div>
@@ -591,11 +591,14 @@
 var APP_VERSION = new Date().getTime();
 
 // 전역 변수 (기존 구조 유지)
-var currentUser = JSON.parse(localStorage.getItem('currentUser')) || {
+var currentUser = JSON.parse(localStorage.getItem('fineu_current_user')) || {
+    id: 'gunwoo55',
     level: 'yellow',
     exp: 0,
     transactions: [],
     virtualBalance: 1000000,
+    totalAssets: 1000000,
+    cash: 1000000,
     portfolio: {
         deposit: [],
         stock: [],
@@ -614,24 +617,6 @@ var levelSystem = {
     brown: { name: 'BROWN', exp: 15000, max: 25000, class: 'level-brown' },
     black: { name: 'BLACK', exp: 25000, max: 50000, class: 'level-black' },
     red: { name: 'RED', exp: 50000, max: 100000, class: 'level-red' }
-};
-
-// 실시간 API 설정
-var REALTIME_API_CONFIG = {
-    stock: {
-        url: 'https://query1.finance.yahoo.com/v8/finance/chart/',
-        corsProxy: 'https://api.allorigins.win/get?url='
-    },
-    crypto: {
-        url: 'https://api.coingecko.com/api/v3/simple/price',
-        symbols: 'bitcoin,ethereum,ripple'
-    },
-    forex: {
-        url: 'https://api.exchangerate-api.com/v4/latest/USD'
-    },
-    bond: {
-        url: 'https://api.stlouisfed.org/fred/series/observations'
-    }
 };
 
 // 실시간 투자 상품 데이터 (API 기반)
@@ -653,7 +638,7 @@ var apiUpdateInterval = null;
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('실시간 API 등급 페이지 로드 시작 - 2025년 8월 9일 12:05:20 KST');
+    console.log('등급 페이지 로드 시작 - 2025년 8월 9일 12:14:45 KST');
     
     loadUserData();
     updateCurrentTime();
@@ -670,7 +655,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(updateCurrentTime, 1000);
 });
 
-// 현재 시간 업데이트 (실시간)
+// 현재 시간 업데이트
 function updateCurrentTime() {
     var now = new Date();
     var kstTime = new Date(now.getTime() + (9 * 60 * 60 * 1000)); // UTC+9 (KST)
@@ -691,6 +676,71 @@ function updateCurrentTime() {
     });
 }
 
+// 사용자 데이터 로드
+function loadUserData() {
+    var savedUser = localStorage.getItem('fineu_current_user');
+    if (savedUser) {
+        var userData = JSON.parse(savedUser);
+        currentUser = Object.assign(currentUser, userData);
+        
+        // 포트폴리오 초기화 (기존 데이터 호환성)
+        if (!currentUser.portfolio) {
+            currentUser.portfolio = {
+                deposit: [],
+                stock: [],
+                bond: [],
+                etf: [],
+                crypto: [],
+                commodity: []
+            };
+        }
+        if (!currentUser.virtualBalance) {
+            currentUser.virtualBalance = 1000000;
+        }
+        if (!currentUser.totalAssets) {
+            currentUser.totalAssets = currentUser.virtualBalance;
+        }
+        if (!currentUser.cash) {
+            currentUser.cash = currentUser.virtualBalance;
+        }
+    }
+}
+
+// 사용자 데이터 저장 (메인 페이지와 동기화)
+function saveUserData() {
+    try {
+        // 총 자산 계산
+        var totalInvestmentValue = 0;
+        Object.keys(currentUser.portfolio).forEach(function(type) {
+            currentUser.portfolio[type].forEach(function(holding) {
+                var currentPrice = getRealtimePrice(type, holding.productId);
+                totalInvestmentValue += holding.quantity * currentPrice;
+            });
+        });
+        
+        currentUser.totalAssets = currentUser.virtualBalance + totalInvestmentValue;
+        currentUser.cash = currentUser.virtualBalance;
+        
+        // 메인 페이지와 동기화를 위한 저장
+        localStorage.setItem('fineu_current_user', JSON.stringify(currentUser));
+        
+        // 사용자별 저장도 유지
+        if (currentUser.id) {
+            localStorage.setItem('user_' + currentUser.id, JSON.stringify(currentUser));
+        }
+        
+        console.log('사용자 데이터 저장 완료:', {
+            virtualBalance: currentUser.virtualBalance,
+            totalAssets: currentUser.totalAssets,
+            cash: currentUser.cash,
+            portfolioValue: totalInvestmentValue
+        });
+        
+    } catch (error) {
+        console.error('데이터 저장 오류:', error);
+    }
+}
+
 // 실시간 시장 데이터 로드
 async function loadRealTimeMarketData() {
     try {
@@ -708,7 +758,7 @@ async function loadRealTimeMarketData() {
         updateRealTimeDisplays();
         
     } catch (error) {
-        console.error('실시간 시장 데이터 로드 오류:', error);
+        console.error('시장 데이터 로드 오류:', error);
         updateApiStatus('error');
         loadFallbackMarketData();
     }
@@ -737,55 +787,28 @@ function updateApiStatus(status) {
 // 실시간 주식 데이터 로드
 async function loadRealTimeStockData() {
     try {
-        // 삼성전자 실시간 가격 조회
-        var response = await fetch(REALTIME_API_CONFIG.stock.corsProxy + 
-            encodeURIComponent(REALTIME_API_CONFIG.stock.url + '005930.KS'));
-        
-        if (response.ok) {
-            var data = await response.json();
-            var stockData = JSON.parse(data.contents);
-            
-            if (stockData.chart && stockData.chart.result) {
-                var result = stockData.chart.result[0];
-                var kospiValue = Math.floor(result.meta.regularMarketPrice * 0.035); // 코스피 근사치
-                document.getElementById('kospiIndex').textContent = kospiValue.toLocaleString();
-                addPriceUpdateEffect('kospiIndex');
-            }
-        }
-    } catch (error) {
-        console.log('주식 API 호출 실패, 시뮬레이션 데이터 사용');
         var kospiValue = 2650 + Math.floor(Math.random() * 100) - 50;
         document.getElementById('kospiIndex').textContent = kospiValue.toLocaleString();
         addPriceUpdateEffect('kospiIndex');
+    } catch (error) {
+        console.log('주식 데이터 시뮬레이션');
     }
 }
 
 // 실시간 암호화폐 데이터 로드
 async function loadRealTimeCryptoData() {
     try {
-        var response = await fetch(REALTIME_API_CONFIG.crypto.url + '?ids=' + REALTIME_API_CONFIG.crypto.symbols + '&vs_currencies=usd');
-        
-        if (response.ok) {
-            var data = await response.json();
-            
-            if (data.bitcoin) {
-                var btcPrice = Math.floor(data.bitcoin.usd);
-                document.getElementById('btcPrice').textContent = '$' + btcPrice.toLocaleString();
-                addPriceUpdateEffect('btcPrice');
-            }
-        }
-    } catch (error) {
-        console.log('암호화폐 API 호출 실패, 시뮬레이션 데이터 사용');
         var btcPrice = 64850 + Math.floor(Math.random() * 2000) - 1000;
         document.getElementById('btcPrice').textContent = '$' + btcPrice.toLocaleString();
         addPriceUpdateEffect('btcPrice');
+    } catch (error) {
+        console.log('암호화폐 데이터 시뮬레이션');
     }
 }
 
 // 실시간 채권 데이터 로드
 async function loadRealTimeBondData() {
     try {
-        // 실제 채권 API 대신 시뮬레이션
         var bondRate = (3.25 + (Math.random() - 0.5) * 0.2).toFixed(2);
         document.getElementById('bondRate').textContent = bondRate + '%';
         addPriceUpdateEffect('bondRate');
@@ -797,7 +820,6 @@ async function loadRealTimeBondData() {
 // 실시간 환율 데이터 로드
 async function loadRealTimeForexData() {
     try {
-        // 실제 환율 API 대신 시뮬레이션
         var goldPrice = 82650 + Math.floor(Math.random() * 200) - 100;
         document.getElementById('goldPrice').textContent = goldPrice.toLocaleString() + '원';
         addPriceUpdateEffect('goldPrice');
@@ -808,7 +830,6 @@ async function loadRealTimeForexData() {
 
 // 대체 시장 데이터 로드 (API 실패 시)
 function loadFallbackMarketData() {
-    // 시뮬레이션 데이터로 대체
     var depositRate = (3.5 + (Math.random() - 0.5) * 0.3).toFixed(1);
     var kospiValue = 2650 + Math.floor(Math.random() * 100) - 50;
     var bondRate = (3.25 + (Math.random() - 0.5) * 0.2).toFixed(2);
@@ -845,25 +866,24 @@ function addPriceUpdateEffect(elementId) {
 
 // 실시간 표시 업데이트
 function updateRealTimeDisplays() {
-    // 가상 자산 실시간 변동
-    var currentBalance = currentUser.virtualBalance || 1000000;
-    var fluctuation = Math.floor(Math.random() * 10000) - 5000; // ±5000원 변동
-    var newBalance = Math.max(0, currentBalance + fluctuation);
+    // 가상 자산 변동 (±1% 범위)
+    var fluctuation = 1 + (Math.random() - 0.5) * 0.02;
+    var newBalance = Math.floor(currentUser.virtualBalance * fluctuation);
     
-    currentUser.virtualBalance = newBalance;
-    document.getElementById('virtualBalance').textContent = newBalance.toLocaleString() + '원';
+    currentUser.virtualBalance = Math.max(0, newBalance);
+    document.getElementById('virtualBalance').textContent = currentUser.virtualBalance.toLocaleString() + '원';
     addPriceUpdateEffect('virtualBalance');
     
-    // 보유 자산 실시간 업데이트
+    // 보유 자산 업데이트
     updateHoldingDisplays();
     
-    // 포트폴리오 실시간 업데이트
+    // 포트폴리오 업데이트
     updatePortfolioRealTime();
 }
 
 // 실시간 업데이트 시작
 function startRealTimeUpdates() {
-    // 10초마다 실시간 데이터 업데이트
+    // 10초마다 데이터 업데이트
     priceUpdateInterval = setInterval(function() {
         loadRealTimeMarketData();
     }, 10000);
@@ -875,7 +895,7 @@ function startRealTimeUpdates() {
     }, 30000);
 }
 
-// 포트폴리오 실시간 업데이트
+// 포트폴리오 업데이트
 function updatePortfolioRealTime() {
     var totalInvestment = 0;
     var totalCurrentValue = 0;
@@ -894,7 +914,7 @@ function updatePortfolioRealTime() {
     var totalProfit = totalCurrentValue - totalInvestment;
     var totalReturn = totalInvestment > 0 ? ((totalProfit / totalInvestment) * 100) : 0;
     
-    // 실시간 업데이트
+    // 업데이트
     document.getElementById('totalInvestment').textContent = totalInvestment.toLocaleString() + '원';
     document.getElementById('totalProfit').textContent = totalProfit.toLocaleString() + '원';
     document.getElementById('totalReturn').textContent = totalReturn.toFixed(2) + '%';
@@ -912,11 +932,10 @@ function updatePortfolioRealTime() {
     }
 }
 
-// 실시간 가격 조회
+// 가격 조회
 function getRealtimePrice(type, productId) {
-    // 실시간 가격 시뮬레이션
     var basePrice = 10000;
-    var fluctuation = 1 + (Math.random() - 0.5) * 0.1; // ±10% 변동
+    var fluctuation = 1 + (Math.random() - 0.5) * 0.1;
     
     switch(type) {
         case 'stock':
@@ -941,28 +960,7 @@ function getRealtimePrice(type, productId) {
     return Math.floor(basePrice * fluctuation);
 }
 
-// 사용자 데이터 로드 (기존 구조 유지)
-function loadUserData() {
-    var savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        if (!currentUser.portfolio) {
-            currentUser.portfolio = {
-                deposit: [],
-                stock: [],
-                bond: [],
-                etf: [],
-                crypto: [],
-                commodity: []
-            };
-        }
-        if (!currentUser.virtualBalance) {
-            currentUser.virtualBalance = 1000000;
-        }
-    }
-}
-
-// 레벨 표시 업데이트 (기존 구조 유지)
+// 레벨 표시 업데이트
 function updateLevelDisplay() {
     var level = levelSystem[currentUser.level];
     var levelBadge = document.getElementById('currentLevelBadge');
@@ -984,7 +982,7 @@ function updateLevelDisplay() {
     }
 }
 
-// 등급별 자산 상품 업데이트 (기존 구조 유지)
+// 등급별 자산 상품 업데이트
 function updateAssetProducts() {
     var levels = Object.keys(levelSystem);
     var currentLevelIndex = levels.indexOf(currentUser.level);
@@ -1030,7 +1028,7 @@ function updateAssetProducts() {
     }
 }
 
-// 보유 자산 표시 업데이트 (실시간)
+// 보유 자산 표시 업데이트
 function updateHoldingDisplays() {
     Object.keys(currentUser.portfolio).forEach(function(type) {
         var totalValue = 0;
@@ -1047,7 +1045,7 @@ function updateHoldingDisplays() {
     });
 }
 
-// 가계부 요약 업데이트 (기존 구조 유지)
+// 가계부 요약 업데이트
 function updateBudgetSummary() {
     var totalIncome = 0;
     var totalExpense = 0;
@@ -1069,7 +1067,7 @@ function updateBudgetSummary() {
     addPriceUpdateEffect('totalExpense');
 }
 
-// 가계부 차트 생성 (기존 구조 유지)
+// 가계부 차트 생성
 function createBudgetChart() {
     var ctx = document.getElementById('budgetChart').getContext('2d');
     
@@ -1143,7 +1141,7 @@ function createBudgetChart() {
     });
 }
 
-// 최근 거래 내역 업데이트 (기존 구조 유지)
+// 최근 거래 내역 업데이트
 function updateRecentTransactions() {
     var container = document.getElementById('recentTransactions');
     container.innerHTML = '';
@@ -1175,9 +1173,9 @@ function updateRecentTransactions() {
     });
 }
 
-// 투자 모달 열기 (실시간 데이터 통합)
+// 투자 모달 열기
 function openInvestmentModal(type) {
-    // 등급 제한 확인 (기존 로직 유지)
+    // 등급 제한 확인
     if (isProductLocked(type)) {
         var requiredLevel = getRequiredLevel(type);
         alert(requiredLevel + ' 등급부터 이용할 수 있습니다.');
@@ -1189,28 +1187,27 @@ function openInvestmentModal(type) {
     var productList = document.getElementById('investmentProductList');
     
     var typeNames = {
-        deposit: '실시간 예적금',
-        stock: '실시간 주식',
-        bond: '실시간 채권',
-        etf: '실시간 ETF/펀드',
-        crypto: '실시간 암호화폐',
-        commodity: '실시간 귀금속/원자재'
+        deposit: '예적금',
+        stock: '주식',
+        bond: '채권',
+        etf: 'ETF/펀드',
+        crypto: '암호화폐',
+        commodity: '귀금속/원자재'
     };
     
     title.textContent = typeNames[type];
-    productList.innerHTML = '<div class="text-center py-4"><div class="inline-block w-6 h-6 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div><p class="text-gray-500 mt-2">실시간 데이터 로딩 중...</p></div>';
+    productList.innerHTML = '<div class="text-center py-4"><div class="inline-block w-6 h-6 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div><p class="text-gray-500 mt-2">데이터 로딩 중...</p></div>';
     
     modal.classList.remove('hidden');
     
-    // 실시간 상품 데이터 로드
+    // 상품 데이터 로드
     setTimeout(function() {
         loadRealTimeProducts(type, productList);
     }, 1000);
 }
 
-// 실시간 투자 상품 로드
+// 투자 상품 로드
 function loadRealTimeProducts(type, container) {
-    // 실시간 API 기반 상품 데이터 생성
     var products = generateRealTimeProductData(type);
     var productsHTML = '';
     
@@ -1244,17 +1241,14 @@ function loadRealTimeProducts(type, container) {
         productsHTML += '<div class="text-right">';
         productsHTML += '<p class="font-bold price-update">' + priceDisplay + '</p>';
         productsHTML += changeDisplay;
-        productsHTML += '<p class="text-xs text-gray-400">실시간</p>';
         productsHTML += '</div></div></div>';
     });
     
     container.innerHTML = productsHTML;
-    
-    // 실시간 상품 데이터 저장
     realTimeInvestmentProducts[type] = products;
 }
 
-// 실시간 상품 데이터 생성
+// 상품 데이터 생성
 function generateRealTimeProductData(type) {
     var currentTime = new Date();
     var products = [];
@@ -1310,7 +1304,7 @@ function generateRealTimeProductData(type) {
                     change: (Math.random() - 0.5) * 6,
                     updateTime: currentTime
                 },
-                { 
+                               { 
                     id: 'stk3', 
                     name: 'NAVER', 
                     type: '주식', 
@@ -1452,7 +1446,7 @@ function generateRealTimeProductData(type) {
     return products;
 }
 
-// 상품 잠금 상태 확인 (기존 로직 유지)
+// 상품 잠금 상태 확인
 function isProductLocked(type) {
     var levels = Object.keys(levelSystem);
     var currentLevelIndex = levels.indexOf(currentUser.level);
@@ -1469,7 +1463,7 @@ function isProductLocked(type) {
     return currentLevelIndex < requiredLevels[type];
 }
 
-// 필요 등급 반환 (기존 로직 유지)
+// 필요 등급 반환
 function getRequiredLevel(type) {
     var requiredLevels = {
         deposit: 'YELLOW',
@@ -1483,14 +1477,14 @@ function getRequiredLevel(type) {
     return requiredLevels[type];
 }
 
-// 보유 수량 조회 (기존 로직 유지)
+// 보유 수량 조회
 function getHolding(type, productId) {
     var holdings = currentUser.portfolio[type] || [];
     var holding = holdings.find(function(h) { return h.productId === productId; });
     return holding ? holding.quantity : 0;
 }
 
-// 실시간 거래 모달 열기
+// 거래 모달 열기
 function openTradeModal(type, productIndex) {
     currentTradeProduct = { 
         type: type, 
@@ -1512,7 +1506,7 @@ function openTradeModal(type, productIndex) {
     
     var product = currentTradeProduct.product;
     
-    title.textContent = '실시간 매수';
+    title.textContent = '매수';
     productName.textContent = product.name;
     productType.textContent = product.type;
     
@@ -1552,11 +1546,11 @@ function openTradeModal(type, productIndex) {
     // 수량 변경 이벤트 리스너
     quantityInput.oninput = updateTradeAmount;
     
-    // 실시간 가격 업데이트 시작
+    // 가격 업데이트 시작
     startRealTimePriceUpdate();
 }
 
-// 실시간 가격 업데이트 (거래 모달)
+// 가격 업데이트 (거래 모달)
 function startRealTimePriceUpdate() {
     var priceUpdateTimer = setInterval(function() {
         if (!currentTradeProduct || document.getElementById('tradeModal').classList.contains('hidden')) {
@@ -1597,7 +1591,7 @@ function startRealTimePriceUpdate() {
     }, 5000); // 5초마다 업데이트
 }
 
-// 거래 탭 전환 (기존 로직 유지)
+// 거래 탭 전환
 function switchTradeTab(type) {
     currentTradeType = type;
     
@@ -1610,15 +1604,15 @@ function switchTradeTab(type) {
     if (type === 'buy') {
         buyTab.className = 'py-2 rounded-lg bg-blue-500 text-white font-semibold';
         sellTab.className = 'py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold';
-        title.textContent = '실시간 매수';
-        button.textContent = '실시간 매수하기';
+        title.textContent = '매수';
+        button.textContent = '매수하기';
         button.className = 'w-full bg-blue-500 text-white py-3 rounded-xl font-semibold';
         holdingInfo.classList.add('hidden');
     } else {
         buyTab.className = 'py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold';
         sellTab.className = 'py-2 rounded-lg bg-red-500 text-white font-semibold';
-        title.textContent = '실시간 매도';
-        button.textContent = '실시간 매도하기';
+        title.textContent = '매도';
+        button.textContent = '매도하기';
         button.className = 'w-full bg-red-500 text-white py-3 rounded-xl font-semibold';
         holdingInfo.classList.remove('hidden');
     }
@@ -1628,7 +1622,7 @@ function switchTradeTab(type) {
     document.getElementById('tradeAmount').value = '';
 }
 
-// 거래 금액 업데이트 (실시간)
+// 거래 금액 업데이트
 function updateTradeAmount() {
     var quantity = parseInt(document.getElementById('tradeQuantity').value) || 0;
     var product = currentTradeProduct.product;
@@ -1640,11 +1634,11 @@ function updateTradeAmount() {
     var priceSymbol = type === 'crypto' ? '$' : '₩';
     document.getElementById('tradeAmount').value = priceSymbol + amount.toLocaleString();
     
-    // 실시간 업데이트 효과
+    // 업데이트 효과
     addPriceUpdateEffect('tradeAmount');
 }
 
-// 실시간 거래 실행
+// 거래 실행
 function executeTrade() {
     var quantity = parseInt(document.getElementById('tradeQuantity').value);
     var product = currentTradeProduct.product;
@@ -1659,7 +1653,7 @@ function executeTrade() {
     var totalAmount = quantity * price;
     
     if (currentTradeType === 'buy') {
-        // 실시간 매수
+        // 매수
         if (currentUser.virtualBalance < totalAmount) {
             alert('가상 자산이 부족합니다.\n현재 잔액: ' + currentUser.virtualBalance.toLocaleString() + '원');
             return;
@@ -1689,10 +1683,10 @@ function executeTrade() {
         // 경험치 추가
         currentUser.exp += Math.floor(totalAmount / 10000) * 10;
         
-        alert('✅ 실시간 매수 완료!\n' + product.name + ' ' + quantity + '개\n투자금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원'));
+        alert('✅ 매수 완료!\n' + product.name + ' ' + quantity + '개\n투자금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원'));
         
     } else {
-        // 실시간 매도
+        // 매도
         var holding = getHolding(type, product.id);
         if (holding < quantity) {
             alert('보유 수량이 부족합니다.\n보유 수량: ' + holding + '개');
@@ -1719,7 +1713,7 @@ function executeTrade() {
         // 경험치 추가
         currentUser.exp += Math.floor(totalAmount / 10000) * 5;
         
-        alert('✅ 실시간 매도 완료!\n' + product.name + ' ' + quantity + '개\n판매금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원'));
+        alert('✅ 매도 완료!\n' + product.name + ' ' + quantity + '개\n판매금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원'));
     }
     
     saveUserData();
@@ -1730,7 +1724,7 @@ function executeTrade() {
     hideInvestmentModal();
 }
 
-// 실시간 포트폴리오 모달 표시
+// 포트폴리오 모달 표시
 function showPortfolioModal() {
     var modal = document.getElementById('portfolioModal');
     updatePortfolioRealTime();
@@ -1739,7 +1733,7 @@ function showPortfolioModal() {
     modal.classList.remove('hidden');
 }
 
-// 포트폴리오 차트 생성 (실시간)
+// 포트폴리오 차트 생성
 function createPortfolioChart() {
     var ctx = document.getElementById('portfolioChart').getContext('2d');
     
@@ -1800,7 +1794,7 @@ function createPortfolioChart() {
     });
 }
 
-// 포트폴리오 목록 업데이트 (실시간)
+// 포트폴리오 목록 업데이트
 function updatePortfolioList() {
     var container = document.getElementById('portfolioList');
     container.innerHTML = '';
@@ -1833,7 +1827,6 @@ function updatePortfolioList() {
                 '<div class="text-right">' +
                 '<p class="font-bold price-update">' + currentValue.toLocaleString() + '원</p>' +
                 '<p class="text-sm ' + profitClass + ' price-update">' + profitIcon + profit.toLocaleString() + '원 (' + returnRate.toFixed(2) + '%)</p>' +
-                '<p class="text-xs text-gray-400">실시간</p>' +
                 '</div></div>';
             
             container.appendChild(itemDiv);
@@ -1845,7 +1838,7 @@ function updatePortfolioList() {
     }
 }
 
-// 수입 추가 (실시간)
+// 수입 추가
 function addIncome() {
     var amount = parseInt(document.getElementById('incomeAmount').value);
     var category = document.getElementById('incomeCategory').value;
@@ -1877,10 +1870,10 @@ function addIncome() {
     updateRecentTransactions();
     hideIncomeModal();
     
-    alert('✅ 실시간 수입이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+50 EXP)');
+    alert('✅ 수입이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+50 EXP)');
 }
 
-// 지출 추가 (실시간)
+// 지출 추가
 function addExpense() {
     var amount = parseInt(document.getElementById('expenseAmount').value);
     var category = document.getElementById('expenseCategory').value;
@@ -1912,10 +1905,10 @@ function addExpense() {
     updateRecentTransactions();
     hideExpenseModal();
     
-    alert('✅ 실시간 지출이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+30 EXP)');
+    alert('✅ 지출이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+30 EXP)');
 }
 
-// 모달 제어 함수들 (기존 구조 유지)
+// 모달 제어 함수들
 function showAddIncomeModal() {
     document.getElementById('incomeModal').classList.remove('hidden');
 }
@@ -1951,13 +1944,9 @@ function hideTradeModal() {
     currentTradeProduct = null;
 }
 
-// 사용자 데이터 저장
-function saveUserData() {
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-}
-
 // 페이지 이동 함수
 function goToIndex() {
+    saveUserData(); // 페이지 이동 전 데이터 저장
     window.location.href = 'index.html?v=' + APP_VERSION;
 }
 
@@ -1989,7 +1978,7 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-console.log('실시간 API 등급 페이지 로드 완료 - 2025년 8월 9일 12:09:31 KST');
+console.log('등급 페이지 로드 완료 - 현재 사용자: gunwoo55 - 2025년 8월 9일 12:20:33 KST');
 </script>
 
 </body>
