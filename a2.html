@@ -20,14 +20,6 @@
         .card-shadow {
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-        .btn-primary {
-            background: linear-gradient(135deg, #4A6FA5, #6B8DC7);
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
-        }
         .level-badge-nav {
             width: 56px;
             height: 56px;
@@ -45,6 +37,7 @@
             transform: translateX(-50%);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 10;
+            cursor: pointer;
             border: 2px solid rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
         }
@@ -68,6 +61,12 @@
         }
 
         .level-yellow { background: linear-gradient(135deg, #FCD34D, #F59E0B); }
+        .level-orange { background: linear-gradient(135deg, #FB923C, #EA580C); }
+        .level-green { background: linear-gradient(135deg, #34D399, #059669); }
+        .level-blue { background: linear-gradient(135deg, #60A5FA, #2563EB); }
+        .level-brown { background: linear-gradient(135deg, #A16207, #92400E); }
+        .level-black { background: linear-gradient(135deg, #374151, #111827); }
+        .level-red { background: linear-gradient(135deg, #EF4444, #DC2626); }
 
         .bottom-navigation {
             position: fixed;
@@ -204,22 +203,6 @@
             padding: 24px;
         }
 
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background-color: #E5E7EB;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 12px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #3B82F6, #6B8DC7);
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }
-
         .term-card {
             background: white;
             border-radius: 12px;
@@ -284,7 +267,7 @@
     <!-- 상단 헤더 -->
     <div class="bg-white shadow-sm p-4">
         <div class="flex items-center justify-between max-w-md mx-auto">
-            <button onclick="location.href='index.html'" class="text-gray-600">
+            <button onclick="navigateToPage('index.html')" class="text-gray-600">
                 <i class="fas fa-arrow-left text-xl"></i>
             </button>
             <h1 class="text-xl font-bold">투자 뉴스</h1>
@@ -345,24 +328,24 @@
     <!-- 하단 네비게이션 -->
     <div class="bottom-navigation">
         <div class="nav-container">
-            <button onclick="location.href='index.html'" class="nav-item">
+            <button onclick="navigateToPage('index.html')" class="nav-item">
                 <i class="fas fa-home text-gray-400"></i>
                 <span class="text-gray-400">홈</span>
             </button>
-            <button onclick="location.href='a2.html'" class="nav-item active">
+            <button onclick="navigateToPage('a2.html')" class="nav-item active">
                 <i class="fas fa-newspaper"></i>
                 <span>뉴스</span>
             </button>
             <div class="nav-center">
-                <div id="navLevelBadge" class="level-badge-nav level-yellow" onclick="location.href='a5.html'">
+                <div id="navLevelBadge" class="level-badge-nav level-yellow" onclick="navigateToPage('a5.html')">
                     YELLOW
                 </div>
             </div>
-            <button onclick="location.href='a4.html'" class="nav-item">
+            <button onclick="navigateToPage('a4.html')" class="nav-item">
                 <i class="fas fa-gamepad text-gray-400"></i>
                 <span class="text-gray-400">게임</span>
             </button>
-            <button onclick="location.href='a3.html'" class="nav-item">
+            <button onclick="navigateToPage('a3.html')" class="nav-item">
                 <i class="fas fa-ellipsis-h text-gray-400"></i>
                 <span class="text-gray-400">더보기</span>
             </button>
@@ -387,9 +370,8 @@
 <script>
 // 전역 변수
 var currentUser = null;
-var NEWS_API_KEY = '2b4b509767814a05ab2cc4e8cd2c1234'; // 데모용 키
+var NEWS_API_KEY = '2b4b509767814a05ab2cc4e8cd2c1234'; // 데모용 키, 실제 사용 시 자신의 키로 교체 필요
 
-// 레벨 시스템
 var levelSystem = {
     yellow: { name: 'YELLOW', class: 'level-yellow' },
     orange: { name: 'ORANGE', class: 'level-orange' },
@@ -400,12 +382,41 @@ var levelSystem = {
     red: { name: 'RED', class: 'level-red' }
 };
 
-// 뉴스 새로고침
+// --- 데이터 연동 로직 ---
+function loadUserData() {
+    try {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+        } else {
+            window.location.href = 'index.html';
+        }
+    } catch (error) {
+        console.error("데이터 로드 오류:", error);
+        window.location.href = 'index.html';
+    }
+}
+
+function saveUserData() {
+    if (currentUser) {
+        try {
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        } catch (error) {
+            console.error("데이터 저장 오류:", error);
+        }
+    }
+}
+
+function navigateToPage(page) {
+    saveUserData();
+    window.location.href = page + '?v=' + new Date().getTime();
+}
+
 function refreshNews() {
     location.reload();
 }
 
-// 모달 열기/닫기
+// 모달
 function openModal(title, content) {
     document.getElementById('modalTitle').innerHTML = title;
     document.getElementById('modalBody').innerHTML = content;
@@ -439,38 +450,29 @@ function showTodayTerm() {
     openModal(title, content);
 }
 
-// 오늘의 뉴스레터
+// 뉴스레터 (API 호출 수정)
 async function showTodayNewsletter() {
     const title = `<i class="fas fa-newspaper text-purple-500 mr-2"></i>오늘의 뉴스레터`;
-    openModal(title, `<div class="text-center py-8">Fetching news...</div>`);
-    const news = await fetchNews('오늘');
-    if (news) {
-        const content = `
-            <div class="space-y-4">${news}</div>
-            <button onclick="completeContent(100, '오늘의 뉴스레터')" class="w-full mt-6 bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-lg font-semibold">
-                <i class="fas fa-check mr-2"></i>읽기 완료 (+100 EXP)
-            </button>`;
-        openModal(title, content);
-    } else {
-        openModal(title, `<p>뉴스를 불러오는 데 실패했습니다.</p>`);
-    }
+    openModal(title, `<div class="text-center py-8">최신 뉴스를 불러오는 중...</div>`);
+    const newsHTML = await fetchNews('finance OR economy');
+    const content = `
+        <div class="space-y-4">${newsHTML}</div>
+        <button onclick="completeContent(100, '오늘의 뉴스레터')" class="w-full mt-6 bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-lg font-semibold">
+            <i class="fas fa-check mr-2"></i>읽기 완료 (+100 EXP)
+        </button>`;
+    openModal(title, content);
 }
 
-// 주간 뉴스레터
 async function showWeeklyNewsletter() {
     const title = `<i class="fas fa-calendar-week text-indigo-500 mr-2"></i>주간 뉴스레터`;
-    openModal(title, `<div class="text-center py-8">Fetching news...</div>`);
-    const news = await fetchNews('이번 주');
-    if (news) {
-        const content = `
-            <div class="space-y-4">${news}</div>
-            <button onclick="completeContent(150, '주간 뉴스레터')" class="w-full mt-6 bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-lg font-semibold">
-                <i class="fas fa-check mr-2"></i>주간 리뷰 완료 (+150 EXP)
-            </button>`;
-        openModal(title, content);
-    } else {
-        openModal(title, `<p>뉴스를 불러오는 데 실패했습니다.</p>`);
-    }
+    openModal(title, `<div class="text-center py-8">주간 뉴스를 불러오는 중...</div>`);
+    const newsHTML = await fetchNews('korea economy weekly');
+     const content = `
+        <div class="space-y-4">${newsHTML}</div>
+        <button onclick="completeContent(150, '주간 뉴스레터')" class="w-full mt-6 bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-lg font-semibold">
+            <i class="fas fa-check mr-2"></i>주간 리뷰 완료 (+150 EXP)
+        </button>`;
+    openModal(title, content);
 }
 
 // 금융 용어 공부
@@ -494,7 +496,7 @@ function showTermStudy() {
     openModal(title, content);
 }
 function showTermDetail(term, fullName, description) {
-    alert(`📚 ${term} (${fullName})\n\n${description}\n\n+25 EXP 획득!`);
+    alert(`📚 ${term} (${fullName})\n\n${description}`);
     addExperience(25);
 }
 
@@ -502,9 +504,9 @@ function showTermDetail(term, fullName, description) {
 function showCardNews() {
     const title = `<i class="fas fa-images text-green-500 mr-2"></i>카드뉴스로 보는 금융이야기`;
     const cardNewsItems = [
-        { title: '투자 기초 가이드', sub: '처음 시작하는 투자, 무엇부터?', icon: 'fa-seedling', img: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwyNjA2MzJ8MHwxfHNlYXJjaHwxfHxzdG9jayUyMG1hcmtldHxlbnwwfHx8fDE2NzI2ODU2MjU&ixlib=rb-4.0.3&q=80&w=400' },
-        { title: '분산투자의 중요성', sub: '계란을 한 바구니에 담지 마라', icon: 'fa-chart-pie', img: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwyNjA2MzJ8MHwxfHNlYXJjaHwyfHxzdG9jayUyMG1hcmtldHxlbnwwfHx8fDE2NzI2ODU2MjU&ixlib=rb-4.0.3&q=80&w=400' },
-        { title: '복리의 마법', sub: '시간이 만들어내는 놀라운 수익', icon: 'fa-magic', img: 'https://images.unsplash.com/photo-1642543348745-03b1219c3664?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwyNjA2MzJ8MHwxfHNlYXJjaHwxfHxjb21wb3VuZCUyMGludGVyZXN0fGVufDB8fHx8MTY3MjY4NTY4MQ&ixlib=rb-4.0.3&q=80&w=400' }
+        { title: '투자 기초 가이드', sub: '처음 시작하는 투자, 무엇부터?', icon: 'fa-seedling', img: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400' },
+        { title: '분산투자의 중요성', sub: '계란을 한 바구니에 담지 마라', icon: 'fa-chart-pie', img: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400' },
+        { title: '복리의 마법', sub: '시간이 만들어내는 놀라운 수익', icon: 'fa-magic', img: 'https://images.unsplash.com/photo-1642543348745-03b1219c3664?w=400' }
     ];
     let content = '<div class="space-y-4">';
     cardNewsItems.forEach(item => {
@@ -523,17 +525,17 @@ function showCardNews() {
     openModal(title, content);
 }
 function showCardNewsDetail(title, subtitle) {
-    alert(`🎨 ${title}\n${subtitle}\n\n시각적으로 쉽게 배우는 금융 지식!\n\n+75 EXP 획득!`);
+    alert(`🎨 ${title}\n${subtitle}`);
     addExperience(75);
 }
 
-// 뉴스 API 호출
-async function fetchNews(period) {
-    const query = period === '오늘' ? 'finance' : 'weekly finance review';
-    const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=ko&sortBy=publishedAt&pageSize=3&apiKey=${NEWS_API_KEY}`;
+// 뉴스 API 호출 (CORS 문제 해결)
+async function fetchNews(query) {
+    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+    const apiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=ko&sortBy=publishedAt&pageSize=3&apiKey=${NEWS_API_KEY}`;
     
     try {
-        const response = await fetch(url);
+        const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         
@@ -550,34 +552,34 @@ async function fetchNews(period) {
         }
     } catch (error) {
         console.error('Fetch error:', error);
-        return `<p>뉴스를 불러오는 중 오류가 발생했습니다. API 키를 확인하거나 나중에 다시 시도해주세요.</p>`;
+        return `<p>뉴스를 불러오는 중 오류가 발생했습니다. API 키가 유효한지 확인해주세요.</p>`;
     }
 }
 
-// 콘텐츠 완료 및 경험치 추가
-function completeContent(amount, type) {
-    addExperience(amount);
-    alert(`${type} 학습을 완료했습니다! (+${amount} EXP)`);
-    closeCommonModal();
-}
+// 경험치 추가
 function addExperience(amount) {
     if(currentUser) {
         currentUser.exp = (currentUser.exp || 0) + amount;
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        alert(`경험치 ${amount} EXP를 획득했습니다!`);
+        // 레벨업 체크는 a5.html 또는 index.html에서 처리
     }
+}
+
+function completeContent(amount, type) {
+    addExperience(amount);
+    closeCommonModal();
 }
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
-    var userData = localStorage.getItem('currentUser');
-    if (userData) {
-        currentUser = JSON.parse(userData);
-        var userLevel = currentUser.level || 'yellow';
-        var levelBadge = document.getElementById('navLevelBadge');
-        if (levelBadge && levelSystem[userLevel]) {
-            levelBadge.className = 'level-badge-nav ' + levelSystem[userLevel].class;
-            levelBadge.textContent = levelSystem[userLevel].name;
-        }
+    loadUserData();
+    if (!currentUser) return;
+
+    var userLevel = currentUser.level || 'yellow';
+    var levelBadge = document.getElementById('navLevelBadge');
+    if (levelBadge && levelSystem[userLevel]) {
+        levelBadge.className = 'level-badge-nav ' + levelSystem[userLevel].class;
+        levelBadge.textContent = levelSystem[userLevel].name;
     }
     
     document.getElementById('commonModal').addEventListener('click', function(e) {
@@ -585,8 +587,9 @@ document.addEventListener('DOMContentLoaded', function() {
             closeCommonModal();
         }
     });
-    console.log('뉴스 페이지 로드 완료');
 });
+
+window.addEventListener('beforeunload', saveUserData);
 </script>
 
 </body>
