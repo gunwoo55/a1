@@ -1,3 +1,4 @@
+<U20250809_085630827_index.html>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -551,6 +552,8 @@ function checkAutoLogin() {
     try {
         var savedUserId = localStorage.getItem('fineu_current_user_id');
         if (savedUserId) {
+            const isSpecialUser = savedUserId === 'test';
+            setupUser(savedUserId, isSpecialUser);
             showMainScreen(savedUserId);
             return true;
         }
@@ -579,12 +582,9 @@ function performLogin() {
             return;
         }
         
-        // 특별 계정 확인
-        if (userId === 'test' && password === 'test') {
-            setupUser(userId, true); // isSpecialUser = true
-        } else {
-            setupUser(userId, false);
-        }
+        const isSpecialUser = userId === 'test' && password === 'test';
+        
+        setupUser(userId, isSpecialUser);
         
         showMainScreen(userId);
     } catch (error) {
@@ -596,8 +596,9 @@ function performLogin() {
 // 메인 화면 표시
 function showMainScreen(userId) {
     try {
-        if (!currentUser) {
-            setupUser(userId, (userId === 'test'));
+        if (!currentUser || currentUser.id !== userId) {
+            const isSpecialUser = userId === 'test';
+            setupUser(userId, isSpecialUser);
         }
         
         var loginScreen = document.getElementById('loginScreen');
@@ -618,6 +619,9 @@ function setupUser(userId, isSpecialUser = false) {
         var savedData = localStorage.getItem('user_' + userId);
         if (savedData) {
             currentUser = JSON.parse(savedData);
+            if (isSpecialUser) {
+                currentUser.level = 'black';
+            }
         } else {
             currentUser = {
                 id: userId,
@@ -631,11 +635,10 @@ function setupUser(userId, isSpecialUser = false) {
             };
         }
         
-        // localStorage에 currentUser 객체를 저장해야 다른 페이지에서 사용 가능
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
         localStorage.setItem('fineu_current_user_id', userId);
         
-    } catch (error) {
+    } catch (error)
         console.error('사용자 설정 오류:', error);
     }
 }
@@ -705,7 +708,6 @@ function updateLevelDisplay() {
         navLevelBadge.className = 'level-badge-nav ' + level.class;
         navLevelBadge.textContent = level.name;
 
-        // 빛나는 효과 추가
         if (currentUser.level === 'black') {
             levelBadgeProfile.classList.add('level-badge-glowing');
             navLevelBadge.classList.add('level-badge-glowing');
@@ -726,7 +728,7 @@ function updateAssetsDisplay() {
         let totalInvestmentValue = 0;
         let totalPurchaseValue = 0;
         Object.values(currentUser.portfolio).flat().forEach(asset => {
-            totalInvestmentValue += asset.quantity * asset.currentPrice; // currentPrice 가정
+            totalInvestmentValue += asset.quantity * (asset.currentPrice || asset.avgPrice);
             totalPurchaseValue += asset.quantity * asset.avgPrice;
         });
 
@@ -754,20 +756,18 @@ function updateAssetsList(totalAssetsValue) {
         var assetsList = document.getElementById('assetsList');
         assetsList.innerHTML = '';
         
-        // 현금 자산
         let assetsHTML = `<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-cash">
             <div class="flex justify-between items-center">
                 <div><p class="font-semibold">현금</p><p class="text-sm text-gray-500">보유 현금</p></div>
                 <div class="text-right"><p class="font-bold">${currentUser.virtualBalance.toLocaleString()}원</p></div>
             </div></div>`;
         
-        // 투자 자산
         Object.entries(currentUser.portfolio).forEach(([type, assets]) => {
             assets.forEach(asset => {
-                const totalValue = asset.quantity * asset.avgPrice; // 혹은 currentPrice
+                const totalValue = asset.quantity * (asset.currentPrice || asset.avgPrice);
                 assetsHTML += `<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-${type}">
                     <div class="flex justify-between items-center">
-                        <div><p class="font-semibold">${asset.name || findProductById(type, asset.productId)?.name}</p>
+                        <div><p class="font-semibold">${asset.name}</p>
                         <p class="text-sm text-gray-500">${asset.quantity}개 보유</p></div>
                         <div class="text-right"><p class="font-bold">${totalValue.toLocaleString()}원</p></div>
                     </div></div>`;
@@ -789,6 +789,8 @@ function updatePortfolioDisplay(totalAssetsValue) {
         var portfolioDetails = document.getElementById('portfolioDetails');
         portfolioDetails.innerHTML = '';
         
+        if (totalAssetsValue === 0) return;
+
         const cashRatio = (currentUser.virtualBalance / totalAssetsValue * 100).toFixed(1);
         let detailsHTML = `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
             <div class="flex items-center space-x-2">
@@ -800,7 +802,7 @@ function updatePortfolioDisplay(totalAssetsValue) {
         
         Object.entries(currentUser.portfolio).forEach(([type, assets]) => {
             if (assets.length > 0) {
-                const typeValue = assets.reduce((sum, asset) => sum + (asset.quantity * asset.avgPrice), 0);
+                const typeValue = assets.reduce((sum, asset) => sum + (asset.quantity * (asset.currentPrice || asset.avgPrice)), 0);
                 const typeRatio = (typeValue / totalAssetsValue * 100).toFixed(1);
                 detailsHTML += `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <div class="flex items-center space-x-2">
@@ -832,7 +834,7 @@ function initPortfolioChart(totalAssetsValue) {
 
         Object.entries(currentUser.portfolio).forEach(([type, assets]) => {
             if (assets.length > 0) {
-                const typeValue = assets.reduce((sum, asset) => sum + (asset.quantity * asset.avgPrice), 0);
+                const typeValue = assets.reduce((sum, asset) => sum + (asset.quantity * (asset.currentPrice || asset.avgPrice)), 0);
                 labels.push(type.charAt(0).toUpperCase() + type.slice(1));
                 data.push(typeValue);
                 colors.push(typeColors[type]);
