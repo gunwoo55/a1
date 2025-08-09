@@ -61,6 +61,7 @@
             transform: translateX(-50%);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 10;
+            cursor: pointer;
             border: 2px solid rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
         }
@@ -335,7 +336,7 @@
     <div class="min-h-screen bg-gray-100">
         <div class="bg-white shadow-sm p-4">
             <div class="flex items-center justify-between max-w-md mx-auto">
-                <button onclick="goToMainPage()" class="text-gray-600">
+                <button onclick="navigateToPage('index.html')" class="text-gray-600">
                     <i class="fas fa-arrow-left text-xl"></i>
                 </button>
                 <h1 class="text-xl font-bold">주식 투자</h1>
@@ -510,11 +511,11 @@
 <!-- 하단 네비게이션 -->
 <div class="bottom-navigation">
     <div class="nav-container">
-        <button onclick="goToMainPage()" class="nav-item">
+        <button onclick="navigateToPage('index.html')" class="nav-item">
             <i class="fas fa-home text-gray-400"></i>
             <span class="text-gray-400">홈</span>
         </button>
-        <button onclick="goToNewsPage()" class="nav-item">
+        <button onclick="navigateToPage('a2.html')" class="nav-item">
             <i class="fas fa-newspaper text-gray-400"></i>
             <span class="text-gray-400">뉴스</span>
         </button>
@@ -523,11 +524,11 @@
                 YELLOW
             </div>
         </div>
-        <button onclick="goToGamePage()" class="nav-item">
+        <button onclick="navigateToPage('a4.html')" class="nav-item">
             <i class="fas fa-gamepad text-gray-400"></i>
             <span class="text-gray-400">게임</span>
         </button>
-        <button onclick="goToMorePage()" class="nav-item">
+        <button onclick="navigateToPage('a3.html')" class="nav-item">
             <i class="fas fa-ellipsis-h text-gray-400"></i>
             <span class="text-gray-400">더보기</span>
         </button>
@@ -611,7 +612,6 @@ var currentUser = null;
 var currentTradingAsset = null;
 var tradingChart = null;
 
-// 레벨 시스템 설정 (다른 파일과 동일하게 유지)
 var levelSystem = {
     yellow: { name: 'YELLOW', exp: 0, max: 3000, class: 'level-yellow' },
     orange: { name: 'ORANGE', exp: 3000, max: 6000, class: 'level-orange' },
@@ -622,11 +622,35 @@ var levelSystem = {
     red: { name: 'RED', exp: 50000, max: 100000, class: 'level-red' }
 };
 
-// 페이지 이동 함수들
-function goToMainPage() { window.location.href = 'index.html?v=' + Date.now(); }
-function goToNewsPage() { window.location.href = 'a2.html?v=' + Date.now(); }
-function goToGamePage() { window.location.href = 'a4.html?v=' + Date.now(); }
-function goToMorePage() { window.location.href = 'a3.html?v=' + Date.now(); }
+// --- 데이터 연동 로직 ---
+function loadUserData() {
+    try {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+        } else {
+            window.location.href = 'index.html'; // 로그인 정보 없으면 홈으로
+        }
+    } catch (error) {
+        console.error("데이터 로드 오류:", error);
+        window.location.href = 'index.html';
+    }
+}
+
+function saveUserData() {
+    if (currentUser) {
+        try {
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        } catch (error) {
+            console.error("데이터 저장 오류:", error);
+        }
+    }
+}
+
+function navigateToPage(page) {
+    saveUserData();
+    window.location.href = page + '?v=' + new Date().getTime();
+}
 
 // 화면 전환
 function showScreen(screenId) {
@@ -648,9 +672,8 @@ function showScreen(screenId) {
     }
 }
 
-// API 호출 래퍼
+// API 호출 래퍼 (CORS 우회)
 async function fetchWithProxy(url) {
-    // CORS 문제를 우회하기 위한 프록시 URL
     const proxyUrl = 'https://api.allorigins.win/raw?url=';
     try {
         const response = await fetch(proxyUrl + encodeURIComponent(url));
@@ -878,25 +901,26 @@ function loadCommodityData() {
 
 // 트레이딩 모달 열기
 function openTradingModal(asset, type) {
-    // ... (기존 코드와 동일)
+    // ... 기존 코드와 동일
 }
 function closeTradingModal() {
-    // ... (기존 코드와 동일)
+    // ... 기존 코드와 동일
 }
 function createTradingChart(asset, type) {
-    // ... (기존 코드와 동일)
+    // ... 기존 코드와 동일
 }
 function updateTotalAmount() {
-    // ... (기존 코드와 동일)
+    // ... 기존 코드와 동일
 }
 function executeTrade(action) {
-    // ... (기존 코드와 동일)
+    // ... 기존 코드와 동일, 단 마지막에 saveUserData() 호출 추가
+    saveUserData();
 }
 function toggleInvestmentMenu() {
-    // ... (기존 코드와 동일)
+    document.getElementById('investmentMenu').classList.toggle('show');
 }
 function hideInvestmentMenu() {
-    // ... (기존 코드와 동일)
+    document.getElementById('investmentMenu').classList.remove('show');
 }
 function refreshStockData() { loadKoreanStocks(); loadForeignStocks(); }
 function refreshCryptoData() { loadRealCryptoData(); }
@@ -908,16 +932,15 @@ function searchStocks() { /* 검색 기능 구현 */ }
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
+    loadUserData(); // 데이터 로드
+    if (!currentUser) return; // 로그인 안됐으면 중단
+
     try {
-        var userData = localStorage.getItem('currentUser');
-        if (userData) {
-            currentUser = JSON.parse(userData);
-            var userLevel = currentUser.level || 'yellow';
-            var levelBadge = document.getElementById('navLevelBadge');
-            if (levelBadge && levelSystem[userLevel]) {
-                levelBadge.className = 'level-badge-nav ' + levelSystem[userLevel].class;
-                levelBadge.textContent = levelSystem[userLevel].name;
-            }
+        var userLevel = currentUser.level || 'yellow';
+        var levelBadge = document.getElementById('navLevelBadge');
+        if (levelBadge && levelSystem[userLevel]) {
+            levelBadge.className = 'level-badge-nav ' + levelSystem[userLevel].class;
+            levelBadge.textContent = levelSystem[userLevel].name;
         }
         
         loadKoreanStocks();
@@ -935,11 +958,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        console.log('투자 페이지 초기화 완료');
     } catch (error) {
         console.error('초기화 오류:', error);
     }
 });
+
+window.addEventListener('beforeunload', saveUserData);
 </script>
 
 </body>
