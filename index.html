@@ -552,8 +552,7 @@ function checkAutoLogin() {
     try {
         var savedUserId = localStorage.getItem('fineu_current_user_id');
         if (savedUserId) {
-            const isSpecialUser = savedUserId === 'test';
-            setupUser(savedUserId, isSpecialUser);
+            setupUser(savedUserId);
             showMainScreen(savedUserId);
             return true;
         }
@@ -619,7 +618,8 @@ function setupUser(userId, isSpecialUser = false) {
         var savedData = localStorage.getItem('user_' + userId);
         if (savedData) {
             currentUser = JSON.parse(savedData);
-            if (isSpecialUser) {
+            // test 계정은 항상 black 등급으로 설정
+            if (userId === 'test') {
                 currentUser.level = 'black';
             }
         } else {
@@ -638,7 +638,7 @@ function setupUser(userId, isSpecialUser = false) {
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
         localStorage.setItem('fineu_current_user_id', userId);
         
-    } catch (error)
+    } catch (error) {
         console.error('사용자 설정 오류:', error);
     }
 }
@@ -653,7 +653,6 @@ function updateDisplay() {
         updateProfileImageDisplay();
         updateLevelDisplay();
         updateAssetsDisplay();
-        updatePortfolioDisplay();
         
     } catch (error) {
         console.error('화면 업데이트 오류:', error);
@@ -664,8 +663,9 @@ function updateDisplay() {
 function updateProfileImageDisplay() {
     const profileImageSrc = currentUser.profileImage;
     const profileImageElements = document.querySelectorAll('#profileImage, #headerProfileImage, #modalProfileImage');
-    const placeholderElements = document.querySelectorAll('#profilePlaceholder, #headerProfileIcon, #modalProfilePlaceholder');
-    
+    const placeholderElements = document.querySelectorAll('#profilePlaceholder');
+    const headerIcon = document.getElementById('headerProfileIcon');
+
     profileImageElements.forEach(el => {
         if (profileImageSrc) {
             el.src = profileImageSrc;
@@ -676,20 +676,17 @@ function updateProfileImageDisplay() {
     });
 
     placeholderElements.forEach(el => {
-        const isHeaderIcon = el.id === 'headerProfileIcon';
         if (profileImageSrc) {
-            if(isHeaderIcon) el.classList.add('hidden');
-            else el.style.display = 'none';
+            el.style.display = 'none';
         } else {
-            if(isHeaderIcon) el.classList.remove('hidden');
-            else el.style.display = 'flex';
+            el.style.display = 'flex';
         }
     });
-
-    if(profileImageSrc) {
-        document.getElementById('headerProfileIcon').classList.add('hidden');
+    
+    if (profileImageSrc) {
+        headerIcon.classList.add('hidden');
     } else {
-        document.getElementById('headerProfileImage').classList.add('hidden');
+        headerIcon.classList.remove('hidden');
     }
 }
 
@@ -956,3 +953,4 @@ window.addEventListener('beforeunload', saveUserData);
 
 </body>
 </html>
+```
