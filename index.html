@@ -8,12 +8,11 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="cache-buster" content="v2.1.0-20241216">
     
     <title>FINE U - 완전 실제 데이터 모의투자 앱</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css?v=2.1.0" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css?v=2.1.0">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js?v=2.1.0"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         body {
@@ -546,330 +545,244 @@ var levelSystem = {
     red: { name: 'RED', exp: 50000, max: 100000, class: 'level-red' }
 };
 
-// 페이지 이동 함수 (캐시 무력화 적용)
-function navigateToPage(page) {
+// --- 데이터 연동 로직 ---
+function loadUserData() {
     try {
-        saveUserData();
-        window.location.href = page + '?v=' + new Date().getTime();
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+        } else {
+            // 로그인 정보가 없으면 로그인 화면으로
+            document.getElementById('mainScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+        }
     } catch (error) {
-        console.error('페이지 이동 오류:', error);
-        window.location.href = page;
+        console.error("데이터 로드 오류:", error);
+        currentUser = null; // 오류 발생 시 초기화
     }
 }
 
-// 자동 로그인 확인
+function saveUserData() {
+    if (currentUser) {
+        try {
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        } catch (error) {
+            console.error("데이터 저장 오류:", error);
+        }
+    }
+}
+
+// 페이지 이동 함수 (데이터 저장 후 이동)
+function navigateToPage(page) {
+    saveUserData();
+    window.location.href = page + '?v=' + new Date().getTime();
+}
+
+// --- 로그인/사용자 설정 ---
+function performLogin() {
+    const userId = document.getElementById('userId').value.trim();
+    const password = document.getElementById('userPassword').value.trim();
+    if (!userId || !password) {
+        alert('아이디와 비밀번호를 입력해주세요.');
+        return;
+    }
+    
+    // 기존 사용자 데이터 확인
+    let savedData = localStorage.getItem('user_' + userId);
+    if (savedData) {
+        currentUser = JSON.parse(savedData);
+    } else {
+        // 신규 사용자 생성
+        currentUser = {
+            id: userId,
+            name: userId,
+            level: 'yellow',
+            exp: 0,
+            virtualBalance: 10000000,
+            portfolio: { deposit: [], stock: [], bond: [], etf: [], crypto: [], commodity: [] },
+            transactions: [],
+            profileImage: null
+        };
+    }
+    
+    // 현재 사용자 정보 저장
+    saveUserData(); 
+    localStorage.setItem('fineu_current_user_id', userId);
+    
+    showMainScreen();
+}
+
 function checkAutoLogin() {
-    try {
-        var savedUserId = localStorage.getItem('fineu_current_user_id');
-        if (savedUserId) {
-            setupUser(savedUserId);
-            showMainScreen(savedUserId);
+    const savedUserId = localStorage.getItem('fineu_current_user_id');
+    if(savedUserId) {
+        loadUserData(); // currentUser 객체 로드
+        if(currentUser && currentUser.id === savedUserId) {
+            showMainScreen();
             return true;
         }
-    } catch (error) {
-        console.error('자동 로그인 확인 오류:', error);
     }
     return false;
 }
 
-// 로그인 함수
-function performLogin() {
-    try {
-        var userIdInput = document.getElementById('userId');
-        var passwordInput = document.getElementById('userPassword');
-        
-        if (!userIdInput || !passwordInput) {
-            alert('입력 필드를 찾을 수 없습니다.');
-            return;
-        }
-        
-        var userId = userIdInput.value.trim();
-        var password = passwordInput.value.trim();
-        
-        if (!userId || !password) {
-            alert('아이디와 비밀번호를 입력해주세요.');
-            return;
-        }
-        
-        const isSpecialUser = userId === 'test' && password === 'test';
-        
-        setupUser(userId, isSpecialUser);
-        
-        showMainScreen(userId);
-    } catch (error) {
-        console.error('로그인 오류:', error);
-        alert('로그인 중 오류가 발생했습니다.');
-    }
+function showMainScreen() {
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('mainScreen').classList.add('active');
+    updateAllDisplays();
 }
 
-// 메인 화면 표시
-function showMainScreen(userId) {
-    try {
-        if (!currentUser || currentUser.id !== userId) {
-            const isSpecialUser = userId === 'test';
-            setupUser(userId, isSpecialUser);
-        }
-        
-        var loginScreen = document.getElementById('loginScreen');
-        var mainScreen = document.getElementById('mainScreen');
-        
-        if (loginScreen) loginScreen.classList.remove('active');
-        if (mainScreen) mainScreen.classList.add('active');
-        
-        updateDisplay();
-    } catch (error) {
-        console.error('화면 전환 오류:', error);
+// --- 화면 업데이트 로직 ---
+function updateAllDisplays() {
+    if (!currentUser) {
+        console.error("업데이트할 사용자 데이터가 없습니다.");
+        return;
     }
+    updateProfileDisplay();
+    updateLevelDisplay();
+    updateAssetsDisplay();
 }
 
-// 사용자 초기화
-function setupUser(userId, isSpecialUser = false) {
-    try {
-        var savedData = localStorage.getItem('user_' + userId);
-        if (savedData) {
-            currentUser = JSON.parse(savedData);
-            // test 계정은 항상 black 등급으로 설정
-            if (userId === 'test') {
-                currentUser.level = 'black';
-            }
-        } else {
-            currentUser = {
-                id: userId,
-                name: userId,
-                level: isSpecialUser ? 'black' : 'yellow',
-                exp: 0,
-                virtualBalance: 10000000,
-                portfolio: { deposit: [], stock: [], bond: [], etf: [], crypto: [], commodity: [] },
-                transactions: [],
-                profileImage: null
-            };
-        }
-        
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        localStorage.setItem('fineu_current_user_id', userId);
-        
-    } catch (error) {
-        console.error('사용자 설정 오류:', error);
-    }
-}
-
-// 화면 표시 업데이트
-function updateDisplay() {
-    try {
-        if (!currentUser) return;
-        
-        document.getElementById('userName').textContent = currentUser.name;
-        
-        updateProfileImageDisplay();
-        updateLevelDisplay();
-        updateAssetsDisplay();
-        
-    } catch (error) {
-        console.error('화면 업데이트 오류:', error);
-    }
-}
-
-// 프로필 이미지 업데이트
-function updateProfileImageDisplay() {
+function updateProfileDisplay() {
+    document.getElementById('userName').textContent = currentUser.name;
     const profileImageSrc = currentUser.profileImage;
     const profileImageElements = document.querySelectorAll('#profileImage, #headerProfileImage, #modalProfileImage');
-    const placeholderElements = document.querySelectorAll('#profilePlaceholder');
-    const headerIcon = document.getElementById('headerProfileIcon');
+    const placeholderElements = document.querySelectorAll('#profilePlaceholder, #headerProfileIcon');
 
     profileImageElements.forEach(el => {
         if (profileImageSrc) {
             el.src = profileImageSrc;
             el.classList.remove('hidden');
+            if (el.id === 'headerProfileImage') {
+                document.getElementById('headerProfileIcon').classList.add('hidden');
+            }
         } else {
             el.classList.add('hidden');
+            if (el.id === 'headerProfileImage') {
+                document.getElementById('headerProfileIcon').classList.remove('hidden');
+            }
         }
     });
 
     placeholderElements.forEach(el => {
-        if (profileImageSrc) {
-            el.style.display = 'none';
-        } else {
-            el.style.display = 'flex';
+        const isHeaderIcon = el.id === 'headerProfileIcon';
+        if (profileImageSrc && isHeaderIcon) el.classList.add('hidden');
+        else if (!profileImageSrc && isHeaderIcon) el.classList.remove('hidden');
+        else if (profileImageSrc && !isHeaderIcon) el.style.display = 'none';
+        else if (!profileImageSrc && !isHeaderIcon) el.style.display = 'flex';
+    });
+}
+
+function updateLevelDisplay() {
+    const level = levelSystem[currentUser.level];
+    if (!level) return;
+    
+    document.getElementById('userLevel').className = 'level-badge-profile ' + level.class;
+    document.getElementById('userLevel').textContent = level.name;
+    document.getElementById('navLevelBadge').className = 'level-badge-nav ' + level.class;
+    document.getElementById('navLevelBadge').textContent = level.name;
+    document.getElementById('userExp').textContent = `${currentUser.exp} / ${level.max} EXP`;
+}
+
+function updateAssetsDisplay() {
+    let totalInvestmentValue = 0;
+    let totalPurchaseValue = 0;
+    Object.values(currentUser.portfolio).flat().forEach(asset => {
+        const currentPrice = asset.currentPrice || asset.avgPrice;
+        totalInvestmentValue += asset.quantity * currentPrice;
+        totalPurchaseValue += asset.quantity * asset.avgPrice;
+    });
+
+    const totalAssetsValue = currentUser.virtualBalance + totalInvestmentValue;
+    document.getElementById('totalAssets').textContent = totalAssetsValue.toLocaleString() + '원';
+    
+    const profitLoss = totalInvestmentValue - totalPurchaseValue;
+    const profitRate = totalPurchaseValue > 0 ? (profitLoss / totalPurchaseValue * 100) : 0;
+    
+    const profitElement = document.getElementById('totalProfitLoss');
+    profitElement.textContent = `${profitLoss >= 0 ? '+' : ''}${profitLoss.toLocaleString()}원 (${profitRate.toFixed(2)}%)`;
+    profitElement.className = `font-semibold ${profitLoss >= 0 ? 'text-red-600' : 'text-blue-600'}`;
+    
+    updateAssetsList(totalAssetsValue);
+}
+
+function updateAssetsList(totalAssetsValue) {
+    const assetsList = document.getElementById('assetsList');
+    assetsList.innerHTML = '';
+    
+    let assetsHTML = `<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-cash">
+        <div class="flex justify-between items-center">
+            <div><p class="font-semibold">현금</p><p class="text-sm text-gray-500">보유 현금</p></div>
+            <div class="text-right"><p class="font-bold">${currentUser.virtualBalance.toLocaleString()}원</p></div>
+        </div></div>`;
+    
+    Object.entries(currentUser.portfolio).forEach(([type, assets]) => {
+        if (!assets) return;
+        assets.forEach(asset => {
+            const totalValue = asset.quantity * (asset.currentPrice || asset.avgPrice);
+            assetsHTML += `<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-${type}">
+                <div class="flex justify-between items-center">
+                    <div><p class="font-semibold">${asset.name}</p><p class="text-sm text-gray-500">${asset.quantity}개 보유</p></div>
+                    <div class="text-right"><p class="font-bold">${totalValue.toLocaleString()}원</p></div>
+                </div></div>`;
+        });
+    });
+    
+    assetsList.innerHTML = assetsHTML;
+    updatePortfolioChart(totalAssetsValue);
+}
+
+function updatePortfolioChart(totalAssetsValue) {
+    const ctx = document.getElementById('portfolioChart').getContext('2d');
+    if (portfolioChart) portfolioChart.destroy();
+    
+    const labels = ['현금'];
+    const data = [currentUser.virtualBalance];
+    const colors = ['#6B7280'];
+    const typeColors = { stock: '#3B82F6', bond: '#10B981', deposit: '#8B5CF6', etf: '#F59E0B', crypto: '#EF4444', commodity: '#6B7280' };
+
+    Object.entries(currentUser.portfolio).forEach(([type, assets]) => {
+        if (assets && assets.length > 0) {
+            const typeValue = assets.reduce((sum, asset) => sum + (asset.quantity * (asset.currentPrice || asset.avgPrice)), 0);
+            if (typeValue > 0) {
+                labels.push(type.charAt(0).toUpperCase() + type.slice(1));
+                data.push(typeValue);
+                colors.push(typeColors[type]);
+            }
         }
     });
     
-    if (profileImageSrc) {
-        headerIcon.classList.add('hidden');
-    } else {
-        headerIcon.classList.remove('hidden');
-    }
+    portfolioChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+
+    updatePortfolioDetails(totalAssetsValue, labels, data, colors);
 }
 
-// 레벨 표시 업데이트
-function updateLevelDisplay() {
-    try {
-        var level = levelSystem[currentUser.level];
-        if (!level) return;
-        
-        var levelBadgeProfile = document.getElementById('userLevel');
-        var navLevelBadge = document.getElementById('navLevelBadge');
-        
-        levelBadgeProfile.className = 'level-badge-profile ' + level.class;
-        levelBadgeProfile.textContent = level.name;
-        
-        navLevelBadge.className = 'level-badge-nav ' + level.class;
-        navLevelBadge.textContent = level.name;
-        
-        document.getElementById('userExp').textContent = currentUser.exp + ' / ' + level.max + ' EXP';
-    } catch (error) {
-        console.error('레벨 업데이트 오류:', error);
-    }
-}
-
-// 자산 표시 업데이트
-function updateAssetsDisplay() {
-    try {
-        let totalInvestmentValue = 0;
-        let totalPurchaseValue = 0;
-        if (currentUser.portfolio) {
-            Object.values(currentUser.portfolio).flat().forEach(asset => {
-                totalInvestmentValue += asset.quantity * (asset.currentPrice || asset.avgPrice);
-                totalPurchaseValue += asset.quantity * asset.avgPrice;
-            });
-        }
-
-        const totalAssetsValue = currentUser.virtualBalance + totalInvestmentValue;
-        document.getElementById('totalAssets').textContent = totalAssetsValue.toLocaleString() + '원';
-        
-        const profitLoss = totalInvestmentValue - totalPurchaseValue;
-        const profitRate = totalPurchaseValue > 0 ? (profitLoss / totalPurchaseValue * 100) : 0;
-        const profitText = (profitLoss >= 0 ? '+' : '') + profitLoss.toLocaleString() + '원 (' + profitRate.toFixed(2) + '%)';
-        const profitClass = profitLoss >= 0 ? 'text-red-600' : 'text-blue-600';
-        
-        const profitElement = document.getElementById('totalProfitLoss');
-        profitElement.textContent = profitText;
-        profitElement.className = 'font-semibold ' + profitClass;
-        
-        updateAssetsList(totalAssetsValue);
-    } catch (error) {
-        console.error('자산 업데이트 오류:', error);
-    }
-}
-
-// 자산 리스트 업데이트
-function updateAssetsList(totalAssetsValue) {
-    try {
-        var assetsList = document.getElementById('assetsList');
-        assetsList.innerHTML = '';
-        
-        let assetsHTML = `<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-cash">
-            <div class="flex justify-between items-center">
-                <div><p class="font-semibold">현금</p><p class="text-sm text-gray-500">보유 현금</p></div>
-                <div class="text-right"><p class="font-bold">${currentUser.virtualBalance.toLocaleString()}원</p></div>
-            </div></div>`;
-        
-        if (currentUser.portfolio) {
-            Object.entries(currentUser.portfolio).forEach(([type, assets]) => {
-                if (!assets) return;
-                assets.forEach(asset => {
-                    const totalValue = asset.quantity * (asset.currentPrice || asset.avgPrice);
-                    const assetName = asset.name || '알 수 없는 자산';
-                    assetsHTML += `<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-${type}">
-                        <div class="flex justify-between items-center">
-                            <div><p class="font-semibold">${assetName}</p>
-                            <p class="text-sm text-gray-500">${asset.quantity}개 보유</p></div>
-                            <div class="text-right"><p class="font-bold">${totalValue.toLocaleString()}원</p></div>
-                        </div></div>`;
-                });
-            });
-        }
-        
-        assetsList.innerHTML = assetsHTML;
-        updatePortfolioDisplay(totalAssetsValue);
-    } catch (error) {
-        console.error('자산 리스트 업데이트 오류:', error);
-    }
-}
-
-// 포트폴리오 표시 업데이트
-function updatePortfolioDisplay(totalAssetsValue) {
-    try {
-        initPortfolioChart(totalAssetsValue);
-        
-        var portfolioDetails = document.getElementById('portfolioDetails');
-        portfolioDetails.innerHTML = '';
-        
-        if (totalAssetsValue === 0) return;
-
-        const cashRatio = (currentUser.virtualBalance / totalAssetsValue * 100).toFixed(1);
-        let detailsHTML = `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-            <div class="flex items-center space-x-2">
-                <div class="w-4 h-4 bg-gray-400 rounded-full"></div>
-                <span class="font-semibold">현금</span></div>
-            <span class="font-bold">${cashRatio}%</span></div>`;
-
-        const typeColors = { stock: '#3B82F6', bond: '#10B981', deposit: '#8B5CF6', etf: '#F59E0B', crypto: '#EF4444', commodity: '#6B7280' };
-        
-        if(currentUser.portfolio){
-            Object.entries(currentUser.portfolio).forEach(([type, assets]) => {
-                if (assets && assets.length > 0) {
-                    const typeValue = assets.reduce((sum, asset) => sum + (asset.quantity * (asset.currentPrice || asset.avgPrice)), 0);
-                    const typeRatio = (typeValue / totalAssetsValue * 100).toFixed(1);
-                    const typeName = type.charAt(0).toUpperCase() + type.slice(1);
-                    detailsHTML += `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-4 h-4 rounded-full" style="background-color: ${typeColors[type]}"></div>
-                            <span class="font-semibold">${typeName}</span></div>
-                        <span class="font-bold">${typeRatio}%</span></div>`;
-                }
-            });
-        }
-        
-        portfolioDetails.innerHTML = detailsHTML;
-    } catch (error) {
-        console.error('포트폴리오 업데이트 오류:', error);
-    }
-}
-
-// 포트폴리오 차트 초기화
-function initPortfolioChart(totalAssetsValue) {
-    try {
-        var canvas = document.getElementById('portfolioChart');
-        if (!canvas) return;
-        var ctx = canvas.getContext('2d');
-        
-        if (portfolioChart) portfolioChart.destroy();
-        
-        var labels = ['현금'];
-        var data = [currentUser.virtualBalance];
-        var colors = ['#6B7280'];
-        const typeColors = { stock: '#3B82F6', bond: '#10B981', deposit: '#8B5CF6', etf: '#F59E0B', crypto: '#EF4444', commodity: '#6B7280' };
-
-        if(currentUser.portfolio){
-            Object.entries(currentUser.portfolio).forEach(([type, assets]) => {
-                if (assets && assets.length > 0) {
-                    const typeValue = assets.reduce((sum, asset) => sum + (asset.quantity * (asset.currentPrice || asset.avgPrice)), 0);
-                    labels.push(type.charAt(0).toUpperCase() + type.slice(1));
-                    data.push(typeValue);
-                    colors.push(typeColors[type]);
-                }
-            });
-        }
-        
-        portfolioChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+function updatePortfolioDetails(totalAssetsValue, labels, data, colors) {
+    const portfolioDetails = document.getElementById('portfolioDetails');
+    let detailsHTML = '';
+    if (totalAssetsValue > 0) {
+        labels.forEach((label, index) => {
+            const ratio = (data[index] / totalAssetsValue * 100).toFixed(1);
+            detailsHTML += `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 rounded-full" style="background-color: ${colors[index]}"></div>
+                    <span class="font-semibold">${label}</span></div>
+                <span class="font-bold">${ratio}%</span></div>`;
         });
-        
-    } catch (error) {
-        console.error('포트폴리오 차트 오류:', error);
     }
+    portfolioDetails.innerHTML = detailsHTML;
 }
 
-function toggleProfileMenu() {
-    document.getElementById('profileMenu').classList.toggle('show');
-}
+// --- 기타 기능 ---
+function toggleProfileMenu() { document.getElementById('profileMenu').classList.toggle('show'); }
+function hideProfileMenu() { document.getElementById('profileMenu').classList.remove('show'); }
 
 function logout() {
-    saveUserData();
-    localStorage.removeItem('fineu_current_user_id');
+    saveUserData(); // 현재 사용자 데이터 저장
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('fineu_current_user_id');
     currentUser = null;
     document.getElementById('mainScreen').classList.remove('active');
     document.getElementById('loginScreen').classList.add('active');
@@ -878,31 +791,15 @@ function logout() {
     hideProfileMenu();
 }
 
-function hideProfileMenu() {
-    document.getElementById('profileMenu').classList.remove('show');
-}
-
-function saveUserData() {
-    if (currentUser) {
-        localStorage.setItem('user_' + currentUser.id, JSON.stringify(currentUser));
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    }
-}
-
-function uploadProfileImage() {
-    document.getElementById('imageUpload').click();
-}
-
+function uploadProfileImage() { document.getElementById('imageUpload').click(); }
 function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = function(e) {
-        const imageSrc = e.target.result;
-        currentUser.profileImage = imageSrc;
-        saveUserData();
-        updateProfileImageDisplay();
+        currentUser.profileImage = e.target.result;
+        updateProfileDisplay();
+        saveUserData(); // 변경 후 바로 저장
     };
     reader.readAsDataURL(file);
 }
@@ -911,30 +808,24 @@ function showRegisterModal() { document.getElementById('registerModal').classLis
 function hideRegisterModal() { document.getElementById('registerModal').classList.add('hidden'); }
 function showFindModal() { document.getElementById('findModal').classList.remove('hidden'); }
 function hideFindModal() { document.getElementById('findModal').classList.add('hidden'); }
+
 function showProfileModal() {
     hideProfileMenu();
     document.getElementById('modalUserName').value = currentUser.name;
-    updateProfileImageDisplay();
+    updateProfileDisplay(); // 모달의 이미지도 업데이트
     document.getElementById('profileModal').classList.remove('hidden');
 }
 function hideProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
 
-function register() {
-    alert('회원가입 기능은 준비 중입니다.');
-    hideRegisterModal();
-}
-
-function findAccount() {
-    alert('계정 찾기 기능은 준비 중입니다.');
-    hideFindModal();
-}
+function register() { alert('회원가입 기능은 준비 중입니다.'); hideRegisterModal(); }
+function findAccount() { alert('계정 찾기 기능은 준비 중입니다.'); hideFindModal(); }
 
 function updateProfile() {
     const newName = document.getElementById('modalUserName').value.trim();
     if (newName) {
         currentUser.name = newName;
+        updateAllDisplays();
         saveUserData();
-        updateDisplay();
         alert('프로필이 업데이트되었습니다.');
         hideProfileModal();
     } else {
@@ -942,26 +833,22 @@ function updateProfile() {
     }
 }
 
+// --- 이벤트 리스너 ---
 document.addEventListener('DOMContentLoaded', function() {
     if (!checkAutoLogin()) {
-        console.log('자동 로그인 실패 - 로그인 화면 표시');
+        console.log('자동 로그인 필요');
     }
-    
-    document.getElementById('userPassword').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') performLogin();
-    });
-    
-    document.addEventListener('click', function(e) {
-        var profileMenu = document.getElementById('profileMenu');
-        var profileButton = document.querySelector('button[onclick="toggleProfileMenu()"]');
-        if (profileMenu.classList.contains('show') && !profileMenu.contains(e.target) && !profileButton.contains(e.target) && !profileButton.querySelector('*').contains(e.target)) {
+    document.getElementById('userPassword').addEventListener('keypress', e => { if (e.key === 'Enter') performLogin(); });
+    document.addEventListener('click', e => {
+        const menu = document.getElementById('profileMenu');
+        const button = document.querySelector('button[onclick="toggleProfileMenu()"]');
+        if (menu.classList.contains('show') && !menu.contains(e.target) && !button.contains(e.target) && !button.querySelector('*').contains(e.target)) {
             hideProfileMenu();
         }
     });
 });
 
 window.addEventListener('beforeunload', saveUserData);
-
 </script>
 
 </body>
