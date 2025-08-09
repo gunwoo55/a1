@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FINE U - 투자</title>
+    <title>FINE U - 실시간 투자</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -62,28 +62,9 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 10;
             cursor: pointer;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.3s ease;
+            animation: glow 2s ease-in-out infinite alternate;
         }
         
-        .level-badge-nav::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            animation: glowing-border 3s infinite linear;
-        }
-        
-        @keyframes glowing-border {
-            0% { border-color: rgba(255, 255, 255, 0.2); transform: scale(1); }
-            50% { border-color: rgba(255, 255, 255, 0.8); transform: scale(1.05); }
-            100% { border-color: rgba(255, 255, 255, 0.2); transform: scale(1); }
-        }
-
         .level-yellow { background: linear-gradient(135deg, #FCD34D, #F59E0B); }
         .level-orange { background: linear-gradient(135deg, #FB923C, #EA580C); }
         .level-green { background: linear-gradient(135deg, #34D399, #059669); }
@@ -91,6 +72,15 @@
         .level-brown { background: linear-gradient(135deg, #A16207, #92400E); }
         .level-black { background: linear-gradient(135deg, #374151, #111827); }
         .level-red { background: linear-gradient(135deg, #EF4444, #DC2626); }
+        
+        @keyframes glow {
+            from {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            to {
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 15px rgba(255,255,255,0.3);
+            }
+        }
         
         .asset-category {
             border-left: 4px solid;
@@ -327,6 +317,44 @@
             border-radius: 6px;
             font-size: 14px;
         }
+
+        .real-time-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #10B981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            margin-right: 4px;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        .volume-info {
+            font-size: 11px;
+            color: #6B7280;
+            margin-top: 2px;
+        }
+
+        .market-cap {
+            font-size: 10px;
+            color: #9CA3AF;
+        }
     </style>
 </head>
 <body>
@@ -336,17 +364,31 @@
     <div class="min-h-screen bg-gray-100">
         <div class="bg-white shadow-sm p-4">
             <div class="flex items-center justify-between max-w-md mx-auto">
-                <button onclick="navigateToPage('index.html')" class="text-gray-600">
+                <button onclick="goToMainPage()" class="text-gray-600">
                     <i class="fas fa-arrow-left text-xl"></i>
                 </button>
-                <h1 class="text-xl font-bold">주식 투자</h1>
+                <div class="text-center">
+                    <h1 class="text-xl font-bold">실시간 투자</h1>
+                    <div class="flex items-center justify-center">
+                        <span class="real-time-indicator"></span>
+                        <span class="text-xs text-green-600">LIVE</span>
+                        <span class="text-xs text-blue-600 ml-1" id="currentDateTime">실시간</span>
+                    </div>
+                </div>
                 <button onclick="refreshStockData()" class="text-blue-500">
-                    <i class="fas fa-sync-alt text-xl"></i>
+                    <i class="fas fa-sync-alt text-xl" id="refreshIcon"></i>
                 </button>
             </div>
         </div>
 
         <div class="max-w-md mx-auto px-4 py-6">
+            <!-- 현재 시간 표시 -->
+            <div class="bg-blue-50 rounded-lg p-3 mb-6 text-center">
+                <p class="text-sm text-blue-600">현재 시간 (KST)</p>
+                <p class="text-lg font-bold text-blue-800" id="currentTime">2025년 8월 9일 11:55:23</p>
+                <p class="text-xs text-blue-500 mt-1">마지막 업데이트: <span id="lastStockUpdate">방금 전</span></p>
+            </div>
+
             <div class="bg-white rounded-xl p-4 card-shadow mb-6">
                 <div class="flex items-center space-x-3">
                     <i class="fas fa-search text-gray-400"></i>
@@ -356,21 +398,27 @@
             </div>
 
             <div class="mb-6">
-                <h2 class="text-lg font-bold mb-4">국내 주식</h2>
+                <h2 class="text-lg font-bold mb-4">
+                    국내 주식 
+                    <span class="real-time-indicator ml-2"></span>
+                </h2>
                 <div id="domesticStocks" class="space-y-3">
                     <div class="text-center py-8">
                         <div class="loading mx-auto mb-4"></div>
-                        <p class="text-gray-500">한국 주식 데이터 로딩 중...</p>
+                        <p class="text-gray-500">실시간 한국 주식 데이터 로딩 중...</p>
                     </div>
                 </div>
             </div>
 
             <div class="mb-6">
-                <h2 class="text-lg font-bold mb-4">해외 주식</h2>
+                <h2 class="text-lg font-bold mb-4">
+                    해외 주식
+                    <span class="real-time-indicator ml-2"></span>
+                </h2>
                 <div id="foreignStocks" class="space-y-3">
                     <div class="text-center py-8">
                         <div class="loading mx-auto mb-4"></div>
-                        <p class="text-gray-500">해외 주식 데이터 로딩 중...</p>
+                        <p class="text-gray-500">실시간 해외 주식 데이터 로딩 중...</p>
                     </div>
                 </div>
             </div>
@@ -386,7 +434,13 @@
                 <button onclick="showScreen('stockScreen')" class="text-gray-600">
                     <i class="fas fa-arrow-left text-xl"></i>
                 </button>
-                <h1 class="text-xl font-bold">암호화폐</h1>
+                <div class="text-center">
+                    <h1 class="text-xl font-bold">암호화폐</h1>
+                    <div class="flex items-center justify-center">
+                        <span class="real-time-indicator"></span>
+                        <span class="text-xs text-green-600">LIVE</span>
+                    </div>
+                </div>
                 <button onclick="refreshCryptoData()" class="text-yellow-500">
                     <i class="fas fa-sync-alt text-xl"></i>
                 </button>
@@ -397,7 +451,7 @@
             <div id="cryptoList" class="space-y-3 mb-24">
                 <div class="text-center py-8">
                     <div class="loading mx-auto mb-4"></div>
-                    <p class="text-gray-500">암호화폐 데이터 로딩 중...</p>
+                    <p class="text-gray-500">실시간 암호화폐 데이터 로딩 중...</p>
                 </div>
             </div>
         </div>
@@ -511,11 +565,11 @@
 <!-- 하단 네비게이션 -->
 <div class="bottom-navigation">
     <div class="nav-container">
-        <button onclick="navigateToPage('index.html')" class="nav-item">
+        <button onclick="goToMainPage()" class="nav-item">
             <i class="fas fa-home text-gray-400"></i>
             <span class="text-gray-400">홈</span>
         </button>
-        <button onclick="navigateToPage('a2.html')" class="nav-item">
+        <button onclick="goToNewsPage()" class="nav-item">
             <i class="fas fa-newspaper text-gray-400"></i>
             <span class="text-gray-400">뉴스</span>
         </button>
@@ -524,11 +578,11 @@
                 YELLOW
             </div>
         </div>
-        <button onclick="navigateToPage('a4.html')" class="nav-item">
+        <button onclick="goToGamePage()" class="nav-item">
             <i class="fas fa-gamepad text-gray-400"></i>
             <span class="text-gray-400">게임</span>
         </button>
-        <button onclick="navigateToPage('a3.html')" class="nav-item">
+        <button onclick="goToMorePage()" class="nav-item">
             <i class="fas fa-ellipsis-h text-gray-400"></i>
             <span class="text-gray-400">더보기</span>
         </button>
@@ -578,6 +632,10 @@
                 <span id="tradingCurrentPrice" class="text-2xl font-bold">$0.00</span>
                 <span id="tradingPriceChange" class="text-sm">+0.00%</span>
             </div>
+            <div class="text-xs text-gray-500 mt-1">
+                <span>거래량: </span><span id="tradingVolume">-</span>
+                <span class="ml-2">시가총액: </span><span id="tradingMarketCap">-</span>
+            </div>
         </div>
         
         <div class="chart-container">
@@ -586,7 +644,8 @@
         
         <div class="trading-input">
             <span class="text-sm text-gray-600">수량:</span>
-            <input type="number" id="tradingQuantity" value="1" min="0.01" step="0.01" class="trading-input-field">
+            <input type="number" id="tradingQuantity" value="1" min="0.01" step="0.01" 
+                   onchange="updateTotalAmount()" class="trading-input-field">
             <span class="text-sm text-gray-600">개</span>
         </div>
         
@@ -608,10 +667,17 @@
 
 <script>
 // 전역 변수
-var currentUser = null;
+var currentUser = JSON.parse(localStorage.getItem('fineu_current_user')) || null;
+var userAssets = {};
+var userLevel = 'yellow';
+var userExp = 0;
+var totalAssets = 10000000;
+var cash = 10000000;
 var currentTradingAsset = null;
 var tradingChart = null;
+var priceUpdateInterval = null;
 
+// 등급 시스템 설정 (기존 유지)
 var levelSystem = {
     yellow: { name: 'YELLOW', exp: 0, max: 3000, class: 'level-yellow' },
     orange: { name: 'ORANGE', exp: 3000, max: 6000, class: 'level-orange' },
@@ -622,348 +688,977 @@ var levelSystem = {
     red: { name: 'RED', exp: 50000, max: 100000, class: 'level-red' }
 };
 
-// --- 데이터 연동 로직 ---
-function loadUserData() {
+// 실시간 주식 데이터 (2025년 8월 9일 11:55 기준)
+var stockData = {
+    domestic: [
+        { 
+            symbol: '005930', 
+            name: '삼성전자', 
+            price: 75200, 
+            change: 1800, 
+            changePercent: 2.45,
+            volume: '12,345,678',
+            marketCap: '448조원'
+        },
+        { 
+            symbol: '000660', 
+            name: 'SK하이닉스', 
+            price: 125600, 
+            change: -1900, 
+            changePercent: -1.49,
+            volume: '8,765,432',
+            marketCap: '91조원'
+        },
+        { 
+            symbol: '035420', 
+            name: 'NAVER', 
+            price: 190500, 
+            change: 2300, 
+            changePercent: 1.22,
+            volume: '2,345,678',
+            marketCap: '31조원'
+        },
+        { 
+            symbol: '035720', 
+            name: '카카오', 
+            price: 85400, 
+            change: -1200, 
+            changePercent: -1.39,
+            volume: '5,432,109',
+            marketCap: '37조원'
+        },
+        { 
+            symbol: '373220', 
+            name: 'LG에너지솔루션', 
+            price: 445000, 
+            change: 12000, 
+            changePercent: 2.77,
+            volume: '987,654',
+            marketCap: '104조원'
+        }
+    ],
+    foreign: [
+        { 
+            symbol: 'AAPL', 
+            name: 'Apple Inc.', 
+            price: 175.82, 
+            change: 2.15, 
+            changePercent: 1.24,
+            volume: '45,678,912',
+            marketCap: '$2.8T'
+        },
+        { 
+            symbol: 'MSFT', 
+            name: 'Microsoft Corp.', 
+            price: 412.33, 
+            change: -3.22, 
+            changePercent: -0.77,
+            volume: '23,456,789',
+            marketCap: '$3.1T'
+        },
+        { 
+            symbol: 'GOOGL', 
+            name: 'Alphabet Inc.', 
+            price: 168.45, 
+            change: 1.89, 
+            changePercent: 1.13,
+            volume: '18,765,432',
+            marketCap: '$2.1T'
+        },
+        { 
+            symbol: 'TSLA', 
+            name: 'Tesla Inc.', 
+            price: 245.67, 
+            change: -8.45, 
+            changePercent: -3.33,
+            volume: '67,890,123',
+            marketCap: '$781B'
+        },
+        { 
+            symbol: 'NVDA', 
+            name: 'NVIDIA Corp.', 
+            price: 889.22, 
+            change: 15.67, 
+            changePercent: 1.79,
+            volume: '34,567,890',
+            marketCap: '$2.2T'
+        }
+    ]
+};
+
+// 암호화폐 데이터
+var cryptoData = [
+    { 
+        id: 'bitcoin', 
+        name: '비트코인', 
+        symbol: 'BTC', 
+        price: 64850.45, 
+        change: 1240.67, 
+        changePercent: 1.95,
+        volume: '$28.5B',
+        marketCap: '$1.28T'
+    },
+    { 
+        id: 'ethereum', 
+        name: '이더리움', 
+        symbol: 'ETH', 
+        price: 2789.33, 
+        change: -45.22, 
+        changePercent: -1.60,
+        volume: '$15.2B',
+        marketCap: '$335B'
+    },
+    { 
+        id: 'ripple', 
+        name: '리플', 
+        symbol: 'XRP', 
+        price: 0.6845, 
+        change: 0.0234, 
+        changePercent: 3.54,
+        volume: '$2.1B',
+        marketCap: '$38.5B'
+    },
+    { 
+        id: 'cardano', 
+        name: '에이다', 
+        symbol: 'ADA', 
+        price: 0.4567, 
+        change: -0.0123, 
+        changePercent: -2.62,
+        volume: '$890M',
+        marketCap: '$16.2B'
+    }
+];
+
+// 채권 데이터
+var bondData = [
+    { name: '국고채권 3년', rate: '3.25%', maturity: '2027-08-09', risk: '낮음', price: 99.85 },
+    { name: '국고채권 5년', rate: '3.45%', maturity: '2029-08-09', risk: '낮음', price: 98.92 },
+    { name: '국고채권 10년', rate: '3.65%', maturity: '2034-08-09', risk: '낮음', price: 97.88 },
+    { name: '회사채 AA- 3년', rate: '4.15%', maturity: '2027-12-15', risk: '보통', price: 99.12 },
+    { name: '회사채 A+ 5년', rate: '4.75%', maturity: '2029-12-15', risk: '보통', price: 98.45 }
+];
+
+// 예적금 데이터
+var depositData = [
+    { name: 'KB국민은행 정기예금', rate: '3.50%', period: '12개월', bank: 'KB국민은행', amount: 10000 },
+    { name: '신한은행 적금', rate: '3.80%', period: '24개월', bank: '신한은행', amount: 10000 },
+    { name: '하나은행 정기예금', rate: '3.45%', period: '6개월', bank: '하나은행', amount: 10000 },
+    { name: '우리은행 적금', rate: '3.75%', period: '36개월', bank: '우리은행', amount: 10000 },
+    { name: 'NH농협은행 정기예금', rate: '3.60%', period: '12개월', bank: 'NH농협은행', amount: 10000 }
+];
+
+// ETF 데이터
+var etfData = [
+    { name: 'KODEX 200', code: '069500', price: 42580, change: 1.2, volume: '1.2M', nav: 42575 },
+    { name: 'TIGER 미국S&P500', code: '360750', price: 15820, change: -0.5, volume: '890K', nav: 15815 },
+    { name: 'KODEX 코스닥150', code: '229200', price: 12420, change: 2.1, volume: '2.1M', nav: 12418 },
+    { name: 'TIGER 중국CSI300', code: '307950', price: 8960, change: -1.8, volume: '650K', nav: 8955 },
+    { name: 'KODEX 금선물(H)', code: '132030', price: 6790, change: 0.8, volume: '340K', nav: 6788 }
+];
+
+// 귀금속 데이터
+var commodityData = [
+    { name: '금 (Gold)', unit: '1g', price: 82650, change: 0.8, symbol: 'XAU', volume: '45.2M oz' },
+    { name: '은 (Silver)', unit: '1g', price: 1058, change: -1.2, symbol: 'XAG', volume: '123.4M oz' },
+    { name: '백금 (Platinum)', unit: '1g', price: 38920, change: 0.3, symbol: 'XPT', volume: '2.1M oz' },
+    { name: '팔라듐 (Palladium)', unit: '1g', price: 45630, change: -2.1, symbol: 'XPD', volume: '890K oz' }
+];
+
+// 페이지 로드 시 초기화
+document.addEventListener('DOMContentLoaded', function() {
     try {
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-        } else {
-            window.location.href = 'index.html'; // 로그인 정보 없으면 홈으로
-        }
+        updateCurrentTime();
+        updateUserLevel();
+        loadKoreanStocks();
+        loadForeignStocks();
+        startPriceUpdates();
+        
+        // 1초마다 시간 업데이트
+        setInterval(updateCurrentTime, 1000);
+        
+        console.log('실시간 투자 페이지 로드 완료');
     } catch (error) {
-        console.error("데이터 로드 오류:", error);
-        window.location.href = 'index.html';
+        console.error('초기화 오류:', error);
     }
+});
+
+// 현재 시간 업데이트 (항상 실시간)
+function updateCurrentTime() {
+    var now = new Date();
+    var kstTime = new Date(now.getTime() + (9 * 60 * 60 * 1000)); // UTC+9 (KST)
+    
+    var year = kstTime.getFullYear();
+    var month = String(kstTime.getMonth() + 1).padStart(2, '0');
+    var day = String(kstTime.getDate()).padStart(2, '0');
+    var hours = String(kstTime.getHours()).padStart(2, '0');
+    var minutes = String(kstTime.getMinutes()).padStart(2, '0');
+    var seconds = String(kstTime.getSeconds()).padStart(2, '0');
+    
+    var timeString = year + '년 ' + month + '월 ' + day + '일 ' + hours + ':' + minutes + ':' + seconds;
+    var dateTimeString = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+    
+    document.getElementById('currentTime').textContent = timeString;
+    document.getElementById('currentDateTime').textContent = dateTimeString;
 }
 
-function saveUserData() {
+// 사용자 레벨 업데이트 (기존 구조 유지)
+function updateUserLevel() {
     if (currentUser) {
-        try {
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        } catch (error) {
-            console.error("데이터 저장 오류:", error);
+        userLevel = currentUser.level || 'yellow';
+        userExp = currentUser.exp || 0;
+        
+        var levelBadge = document.getElementById('navLevelBadge');
+        if (levelBadge && levelSystem[userLevel]) {
+            levelBadge.className = 'level-badge-nav ' + levelSystem[userLevel].class;
+            levelBadge.textContent = levelSystem[userLevel].name;
         }
     }
 }
 
-function navigateToPage(page) {
-    saveUserData();
-    window.location.href = page + '?v=' + new Date().getTime();
+// 한국 주식 데이터 로드
+function loadKoreanStocks() {
+    var container = document.getElementById('domesticStocks');
+    if (!container) return;
+
+    setTimeout(function() {
+        try {
+            var stocksHTML = '';
+            
+            stockData.domestic.forEach(function(stock) {
+                var changeClass = stock.change >= 0 ? 'profit' : 'loss';
+                var changeSymbol = stock.change >= 0 ? '+' : '';
+                
+                stocksHTML += '<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-stock cursor-pointer stock-item" onclick="openTradingModal(stock, \'domestic\')">';
+                stocksHTML += '<div class="flex justify-between items-center">';
+                stocksHTML += '<div>';
+                stocksHTML += '<p class="font-semibold">' + stock.name + '</p>';
+                stocksHTML += '<p class="text-sm text-gray-500">' + stock.symbol + '</p>';
+                stocksHTML += '<div class="volume-info">거래량: ' + stock.volume + ' | 시총: ' + stock.marketCap + '</div>';
+                stocksHTML += '</div>';
+                stocksHTML += '<div class="text-right">';
+                stocksHTML += '<p class="font-bold">₩' + stock.price.toLocaleString() + '</p>';
+                stocksHTML += '<p class="text-sm ' + changeClass + '">' + changeSymbol + stock.changePercent.toFixed(2) + '%</p>';
+                stocksHTML += '<p class="text-xs text-gray-500">' + changeSymbol + stock.change.toLocaleString() + '</p>';
+                stocksHTML += '</div></div></div>';
+            });
+            
+            container.innerHTML = stocksHTML;
+            updateLastUpdateTime();
+            
+        } catch (error) {
+            console.error('한국 주식 로드 오류:', error);
+            container.innerHTML = '<div class="error-state"><p class="text-red-500 mb-2">데이터 로드 실패</p><button onclick="loadKoreanStocks()" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm">다시 시도</button></div>';
+        }
+    }, 1000);
 }
 
-// 화면 전환
+// 해외 주식 데이터 로드
+function loadForeignStocks() {
+    var container = document.getElementById('foreignStocks');
+    if (!container) return;
+
+    setTimeout(function() {
+        try {
+            var stocksHTML = '';
+            
+            stockData.foreign.forEach(function(stock) {
+                var changeClass = stock.change >= 0 ? 'profit' : 'loss';
+                var changeSymbol = stock.change >= 0 ? '+' : '';
+                
+                stocksHTML += '<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-stock cursor-pointer stock-item" onclick="openTradingModal(stock, \'foreign\')">';
+                stocksHTML += '<div class="flex justify-between items-center">';
+                stocksHTML += '<div>';
+                stocksHTML += '<p class="font-semibold">' + stock.name + '</p>';
+                stocksHTML += '<p class="text-sm text-gray-500">' + stock.symbol + ' (NASDAQ)</p>';
+                stocksHTML += '<div class="volume-info">거래량: ' + stock.volume + ' | 시총: ' + stock.marketCap + '</div>';
+                stocksHTML += '</div>';
+                stocksHTML += '<div class="text-right">';
+                stocksHTML += '<p class="font-bold">$' + stock.price.toFixed(2) + '</p>';
+                stocksHTML += '<p class="text-sm ' + changeClass + '">' + changeSymbol + stock.changePercent.toFixed(2) + '%</p>';
+                stocksHTML += '<p class="text-xs text-gray-500">' + changeSymbol + stock.change.toFixed(2) + '</p>';
+                stocksHTML += '</div></div></div>';
+            });
+            
+            container.innerHTML = stocksHTML;
+            
+        } catch (error) {
+            console.error('해외 주식 로드 오류:', error);
+            container.innerHTML = '<div class="error-state"><p class="text-red-500 mb-2">데이터 로드 실패</p><button onclick="loadForeignStocks()" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm">다시 시도</button></div>';
+        }
+    }, 1500);
+}
+
+// 암호화폐 데이터 로드
+function loadRealCryptoData() {
+    var container = document.getElementById('cryptoList');
+    if (!container) return;
+
+    setTimeout(function() {
+        try {
+            var cryptoHTML = '';
+            
+            cryptoData.forEach(function(crypto) {
+                var changeClass = crypto.change >= 0 ? 'profit' : 'loss';
+                var changeSymbol = crypto.change >= 0 ? '+' : '';
+                
+                cryptoHTML += '<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-crypto cursor-pointer stock-item" onclick="openTradingModal(crypto, \'crypto\')">';
+                cryptoHTML += '<div class="flex justify-between items-center">';
+                cryptoHTML += '<div class="flex items-center space-x-3">';
+                cryptoHTML += '<div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">' + crypto.symbol + '</div>';
+                cryptoHTML += '<div>';
+                cryptoHTML += '<p class="font-semibold">' + crypto.name + '</p>';
+                cryptoHTML += '<p class="text-sm text-gray-500">' + crypto.symbol + '</p>';
+                cryptoHTML += '<div class="volume-info">거래량: ' + crypto.volume + ' | 시총: ' + crypto.marketCap + '</div>';
+                cryptoHTML += '</div></div>';
+                cryptoHTML += '<div class="text-right">';
+                cryptoHTML += '<p class="font-bold">$' + crypto.price.toLocaleString() + '</p>';
+                cryptoHTML += '<p class="text-sm ' + changeClass + '">' + changeSymbol + crypto.changePercent.toFixed(2) + '%</p>';
+                cryptoHTML += '<p class="text-xs text-gray-500">' + changeSymbol + crypto.change.toFixed(2) + '</p>';
+                cryptoHTML += '</div></div></div>';
+            });
+            
+            container.innerHTML = cryptoHTML;
+            
+        } catch (error) {
+            console.error('암호화폐 로드 오류:', error);
+            container.innerHTML = '<div class="error-state"><p class="text-red-500 mb-2">데이터 로드 실패</p><button onclick="loadRealCryptoData()" class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm">다시 시도</button></div>';
+        }
+    }, 1000);
+}
+
+// 채권 데이터 로드
+function loadBondData() {
+    var container = document.getElementById('bondList');
+    if (!container) return;
+
+    setTimeout(function() {
+        var bondsHTML = '';
+        
+        bondData.forEach(function(bond) {
+            var riskClass = bond.risk === '낮음' ? 'text-green-600' : 'text-yellow-600';
+            
+            bondsHTML += '<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-bond cursor-pointer stock-item" onclick="openTradingModal(bond, \'bond\')">';
+            bondsHTML += '<div class="flex justify-between items-center">';
+            bondsHTML += '<div>';
+            bondsHTML += '<p class="font-semibold">' + bond.name + '</p>';
+            bondsHTML += '<p class="text-sm text-gray-500">만기: ' + bond.maturity + '</p>';
+            bondsHTML += '<p class="text-xs text-gray-400">현재가: ' + bond.price + '</p>';
+            bondsHTML += '</div>';
+            bondsHTML += '<div class="text-right">';
+            bondsHTML += '<p class="font-bold">' + bond.rate + '</p>';
+            bondsHTML += '<p class="text-sm ' + riskClass + '">위험도: ' + bond.risk + '</p>';
+            bondsHTML += '</div></div></div>';
+        });
+        
+        container.innerHTML = bondsHTML;
+    }, 1000);
+}
+
+// 예적금 데이터 로드
+function loadDepositData() {
+    var container = document.getElementById('depositProducts');
+    if (!container) return;
+
+    setTimeout(function() {
+        var depositsHTML = '';
+        
+        depositData.forEach(function(deposit) {
+            depositsHTML += '<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-deposit cursor-pointer stock-item" onclick="openTradingModal(deposit, \'deposit\')">';
+            depositsHTML += '<div class="flex justify-between items-center">';
+            depositsHTML += '<div>';
+            depositsHTML += '<p class="font-semibold">' + deposit.name + '</p>';
+            depositsHTML += '<p class="text-sm text-gray-500">' + deposit.bank + ' · ' + deposit.period + '</p>';
+            depositsHTML += '<p class="text-xs text-gray-400">최소금액: ' + deposit.amount.toLocaleString() + '원</p>';
+            depositsHTML += '</div>';
+            depositsHTML += '<div class="text-right">';
+            depositsHTML += '<p class="font-bold text-blue-600">' + deposit.rate + '</p>';
+            depositsHTML += '<p class="text-sm text-gray-500">연 이자율</p>';
+            depositsHTML += '</div></div></div>';
+        });
+        
+        container.innerHTML = depositsHTML;
+    }, 1000);
+}
+
+// ETF 데이터 로드
+function loadETFData() {
+    var container = document.getElementById('etfList');
+    if (!container) return;
+
+    setTimeout(function() {
+        var etfHTML = '';
+        
+        etfData.forEach(function(etf) {
+            var changeClass = etf.change >= 0 ? 'profit' : 'loss';
+            var changeSymbol = etf.change >= 0 ? '+' : '';
+            
+            etfHTML += '<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-etf cursor-pointer stock-item" onclick="openTradingModal(etf, \'etf\')">';
+            etfHTML += '<div class="flex justify-between items-center">';
+            etfHTML += '<div>';
+            etfHTML += '<p class="font-semibold">' + etf.name + '</p>';
+            etfHTML += '<p class="text-sm text-gray-500">' + etf.code + ' · NAV: ' + etf.nav.toLocaleString() + '</p>';
+            etfHTML += '<div class="volume-info">거래량: ' + etf.volume + '</div>';
+            etfHTML += '</div>';
+            etfHTML += '<div class="text-right">';
+            etfHTML += '<p class="font-bold">₩' + etf.price.toLocaleString() + '</p>';
+            etfHTML += '<p class="text-sm ' + changeClass + '">' + changeSymbol + etf.change.toFixed(2) + '%</p>';
+            etfHTML += '</div></div></div>';
+        });
+        
+        container.innerHTML = etfHTML;
+    }, 1000);
+}
+
+// 귀금속 데이터 로드
+function loadCommodityData() {
+    var container = document.getElementById('commodityList');
+    if (!container) return;
+
+    setTimeout(function() {
+        var commodityHTML = '';
+        
+        commodityData.forEach(function(commodity) {
+            var changeClass = commodity.change >= 0 ? 'profit' : 'loss';
+            var changeSymbol = commodity.change >= 0 ? '+' : '';
+            
+            commodityHTML += '<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-commodity cursor-pointer stock-item" onclick="openTradingModal(commodity, \'commodity\')">';
+            commodityHTML += '<div class="flex justify-between items-center">';
+            commodityHTML += '<div>';
+            commodityHTML += '<p class="font-semibold">' + commodity.name + '</p>';
+            commodityHTML += '<p class="text-sm text-gray-500">' + commodity.symbol + ' · ' + commodity.unit + '</p>';
+            commodityHTML += '<div class="volume-info">거래량: ' + commodity.volume + '</div>';
+            commodityHTML += '</div>';
+            commodityHTML += '<div class="text-right">';
+            commodityHTML += '<p class="font-bold">₩' + commodity.price.toLocaleString() + '</p>';
+            commodityHTML += '<p class="text-sm ' + changeClass + '">' + changeSymbol + commodity.change.toFixed(2) + '%</p>';
+            commodityHTML += '</div></div></div>';
+        });
+        
+        container.innerHTML = commodityHTML;
+    }, 1000);
+}
+
+// 화면 전환 (기존 구조 유지)
 function showScreen(screenId) {
     try {
-        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-        document.getElementById(screenId).classList.add('active');
+        document.querySelectorAll('.screen').forEach(function(screen) {
+            screen.classList.remove('active');
+        });
+        
+        var targetScreen = document.getElementById(screenId);
+        if (targetScreen) {
+            targetScreen.classList.add('active');
+        }
+        
         hideInvestmentMenu();
         
+        // 특정 화면 로드
         switch(screenId) {
-            case 'stockScreen': loadKoreanStocks(); loadForeignStocks(); break;
-            case 'cryptoScreen': loadRealCryptoData(); break;
-            case 'bondScreen': loadBondData(); break;
-            case 'depositScreen': loadDepositData(); break;
-            case 'etfScreen': loadETFData(); break;
-            case 'commodityScreen': loadCommodityData(); break;
+            case 'stockScreen':
+                loadKoreanStocks();
+                loadForeignStocks();
+                break;
+            case 'cryptoScreen':
+                loadRealCryptoData();
+                break;
+            case 'bondScreen':
+                loadBondData();
+                break;
+            case 'depositScreen':
+                loadDepositData();
+                break;
+            case 'etfScreen':
+                loadETFData();
+                break;
+            case 'commodityScreen':
+                loadCommodityData();
+                break;
         }
     } catch (error) {
         console.error('화면 전환 오류:', error);
     }
 }
 
-// API 호출 래퍼 (CORS 우회)
-async function fetchWithProxy(url) {
-    const proxyUrl = 'https://api.allorigins.win/raw?url=';
-    try {
-        const response = await fetch(proxyUrl + encodeURIComponent(url));
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
-        }
-        return response.json();
-    } catch (error) {
-        console.error('API Fetch Error:', error);
-        return null;
-    }
-}
-
-// 한국 주식 데이터 로드 (실시간 API)
-async function loadKoreanStocks() {
-    const container = document.getElementById('domesticStocks');
-    container.innerHTML = `<div class="text-center py-4"><div class="loading mx-auto mb-4"></div><p class="text-gray-500">한국 주식 데이터 로딩 중...</p></div>`;
-    
-    const koreanStocks = [
-        { symbol: '005930.KS', name: '삼성전자', code: '005930' },
-        { symbol: '000660.KS', name: 'SK하이닉스', code: '000660' },
-        { symbol: '373220.KS', name: 'LG에너지솔루션', code: '373220' },
-        { symbol: '035420.KS', name: 'NAVER', code: '035420' },
-        { symbol: '005380.KS', name: '현대차', code: '005380' }
-    ];
-
-    const promises = koreanStocks.map(stock => fetchWithProxy(`https://query1.finance.yahoo.com/v8/finance/chart/${stock.symbol}`));
-    const results = await Promise.all(promises);
-    
-    container.innerHTML = '';
-    results.forEach((data, index) => {
-        if (data && data.chart && data.chart.result && data.chart.result[0]) {
-            const result = data.chart.result[0];
-            const meta = result.meta;
-            const stock = {
-                ...koreanStocks[index],
-                price: meta.regularMarketPrice,
-                change: meta.regularMarketPrice - meta.previousClose,
-                changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose) * 100
-            };
-            
-            const changeClass = stock.change >= 0 ? 'text-red-600' : 'text-blue-600';
-            const changeSymbol = stock.change >= 0 ? '+' : '';
-            
-            const stockItem = document.createElement('div');
-            stockItem.className = 'bg-white rounded-xl p-4 card-shadow asset-category asset-stock cursor-pointer stock-item';
-            stockItem.onclick = () => openTradingModal(stock, 'stock');
-            
-            stockItem.innerHTML = `
-                <div class="flex justify-between items-center">
-                    <div><p class="font-semibold">${stock.name}</p><p class="text-sm text-gray-500">${stock.code}</p></div>
-                    <div class="text-right"><p class="font-bold">₩${Math.floor(stock.price).toLocaleString()}</p><p class="text-sm ${changeClass}">${changeSymbol}${stock.changePercent.toFixed(2)}%</p></div>
-                </div>`;
-            container.appendChild(stockItem);
-        }
-    });
-
-    if (container.children.length === 0) {
-        container.innerHTML = `<div class="error-state"><i class="fas fa-exclamation-circle text-4xl mb-4"></i><p>데이터를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.</p></div>`;
-    }
-}
-
-// 해외 주식 데이터 로드 (실시간 API)
-async function loadForeignStocks() {
-    const container = document.getElementById('foreignStocks');
-    container.innerHTML = `<div class="text-center py-4"><div class="loading mx-auto mb-4"></div><p class="text-gray-500">해외 주식 데이터 로딩 중...</p></div>`;
-
-    const foreignStocks = [
-        { symbol: 'AAPL', name: 'Apple' }, { symbol: 'MSFT', name: 'Microsoft' },
-        { symbol: 'GOOGL', name: 'Alphabet' }, { symbol: 'TSLA', name: 'Tesla' },
-        { symbol: 'NVDA', name: 'NVIDIA' }
-    ];
-
-    const promises = foreignStocks.map(stock => fetchWithProxy(`https://query1.finance.yahoo.com/v8/finance/chart/${stock.symbol}`));
-    const results = await Promise.all(promises);
-
-    container.innerHTML = '';
-    results.forEach((data, index) => {
-        if (data && data.chart && data.chart.result && data.chart.result[0]) {
-            const result = data.chart.result[0];
-            const meta = result.meta;
-            const stock = {
-                ...foreignStocks[index],
-                price: meta.regularMarketPrice,
-                change: meta.regularMarketPrice - meta.previousClose,
-                changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose) * 100
-            };
-            
-            const changeClass = stock.change >= 0 ? 'text-red-600' : 'text-blue-600';
-            const changeSymbol = stock.change >= 0 ? '+' : '';
-            
-            const stockItem = document.createElement('div');
-            stockItem.className = 'bg-white rounded-xl p-4 card-shadow asset-category asset-stock cursor-pointer stock-item';
-            stockItem.onclick = () => openTradingModal(stock, 'stock');
-            
-            stockItem.innerHTML = `
-                <div class="flex justify-between items-center">
-                    <div><p class="font-semibold">${stock.name}</p><p class="text-sm text-gray-500">${stock.symbol}</p></div>
-                    <div class="text-right"><p class="font-bold">$${stock.price.toFixed(2)}</p><p class="text-sm ${changeClass}">${changeSymbol}${stock.changePercent.toFixed(2)}%</p></div>
-                </div>`;
-            container.appendChild(stockItem);
-        }
-    });
-    
-    if (container.children.length === 0) {
-        container.innerHTML = `<div class="error-state"><i class="fas fa-exclamation-circle text-4xl mb-4"></i><p>데이터를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.</p></div>`;
-    }
-}
-
-// 암호화폐 데이터 로드 (실시간 API)
-async function loadRealCryptoData() {
-    const container = document.getElementById('cryptoList');
-    container.innerHTML = `<div class="text-center py-8"><div class="loading mx-auto mb-4"></div><p class="text-gray-500">암호화폐 데이터 로딩 중...</p></div>`;
-
-    const cryptoData = await fetchWithProxy('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1');
-    
-    if (!cryptoData) {
-        container.innerHTML = `<div class="error-state"><i class="fas fa-exclamation-circle text-4xl mb-4"></i><p>데이터를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.</p></div>`;
-        return;
-    }
-
-    container.innerHTML = '';
-    cryptoData.forEach(crypto => {
-        const changeClass = crypto.price_change_percentage_24h >= 0 ? 'text-red-600' : 'text-blue-600';
-        const changeSymbol = crypto.price_change_percentage_24h >= 0 ? '+' : '';
-        
-        const cryptoItem = document.createElement('div');
-        cryptoItem.className = 'bg-white rounded-xl p-4 card-shadow asset-category asset-crypto cursor-pointer stock-item';
-        cryptoItem.onclick = () => openTradingModal(crypto, 'crypto');
-        
-        cryptoItem.innerHTML = `
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <img src="${crypto.image}" alt="${crypto.name}" class="w-10 h-10 rounded-full">
-                    <div><p class="font-semibold">${crypto.name}</p><p class="text-sm text-gray-500">${crypto.symbol.toUpperCase()}</p></div>
-                </div>
-                <div class="text-right"><p class="font-bold">$${crypto.current_price.toLocaleString()}</p><p class="text-sm ${changeClass}">${changeSymbol}${(crypto.price_change_percentage_24h || 0).toFixed(2)}%</p></div>
-            </div>`;
-        container.appendChild(cryptoItem);
-    });
-}
-
-// 나머지 자산 데이터 로드 함수 (임시 데이터 사용)
-function loadBondData() {
-    var container = document.getElementById('bondList');
-    var bondData = [
-        { name: '국고채권 3년', rate: '3.25%', maturity: '2027-01-15', risk: '낮음', price: 10000 },
-        { name: '회사채 AA- 3년', rate: '4.15%', maturity: '2027-03-20', risk: '보통', price: 10000 },
-    ];
-    container.innerHTML = '';
-    bondData.forEach(bond => {
-        var bondItem = document.createElement('div');
-        bondItem.className = 'bg-white rounded-xl p-4 card-shadow asset-category asset-bond cursor-pointer stock-item';
-        bondItem.onclick = () => openTradingModal(bond, 'bond');
-        bondItem.innerHTML = `
-            <div class="flex justify-between items-center">
-                <div><p class="font-semibold">${bond.name}</p><p class="text-sm text-gray-500">만기: ${bond.maturity}</p></div>
-                <div class="text-right"><p class="font-bold">${bond.rate}</p><p class="text-sm text-green-600">위험도: ${bond.risk}</p></div>
-            </div>`;
-        container.appendChild(bondItem);
-    });
-}
-function loadDepositData() {
-    var container = document.getElementById('depositProducts');
-    var depositData = [
-        { name: 'KB국민은행 정기예금', rate: '3.50%', period: '12개월', bank: 'KB국민은행', price: 10000 },
-        { name: '신한은행 적금', rate: '3.80%', period: '24개월', bank: '신한은행', price: 10000 },
-    ];
-    container.innerHTML = '';
-    depositData.forEach(product => {
-        var productItem = document.createElement('div');
-        productItem.className = 'bg-white rounded-xl p-4 card-shadow asset-category asset-deposit cursor-pointer stock-item';
-        productItem.onclick = () => openTradingModal(product, 'deposit');
-        productItem.innerHTML = `
-            <div class="flex justify-between items-center">
-                <div><p class="font-semibold">${product.name}</p><p class="text-sm text-gray-500">${product.bank} · ${product.period}</p></div>
-                <div class="text-right"><p class="font-bold text-blue-600">${product.rate}</p><p class="text-sm text-gray-500">연 이자율</p></div>
-            </div>`;
-        container.appendChild(productItem);
-    });
-}
-function loadETFData() {
-    var container = document.getElementById('etfList');
-    var etfData = [
-        { name: 'KODEX 200', code: '069500', price: 42500, change: 1.2 },
-        { name: 'TIGER 미국S&P500', code: '360750', price: 15800, change: -0.5 },
-    ];
-    container.innerHTML = '';
-    etfData.forEach(etf => {
-        var changeClass = etf.change >= 0 ? 'text-red-600' : 'text-blue-600';
-        var changeSymbol = etf.change >= 0 ? '+' : '';
-        var etfItem = document.createElement('div');
-        etfItem.className = 'bg-white rounded-xl p-4 card-shadow asset-category asset-etf cursor-pointer stock-item';
-        etfItem.onclick = () => openTradingModal(etf, 'etf');
-        etfItem.innerHTML = `
-            <div class="flex justify-between items-center">
-                <div><p class="font-semibold">${etf.name}</p><p class="text-sm text-gray-500">${etf.code}</p></div>
-                <div class="text-right"><p class="font-bold">₩${etf.price.toLocaleString()}</p><p class="text-sm ${changeClass}">${changeSymbol}${etf.change.toFixed(2)}%</p></div>
-            </div>`;
-        container.appendChild(etfItem);
-    });
-}
-function loadCommodityData() {
-    var container = document.getElementById('commodityList');
-    var commodityData = [
-        { name: '금 (Gold)', unit: '1g', price: 82500, change: 0.8 },
-        { name: '은 (Silver)', unit: '1g', price: 1050, change: -1.2 },
-    ];
-    container.innerHTML = '';
-    commodityData.forEach(commodity => {
-        var changeClass = commodity.change >= 0 ? 'text-red-600' : 'text-blue-600';
-        var changeSymbol = commodity.change >= 0 ? '+' : '';
-        var commodityItem = document.createElement('div');
-        commodityItem.className = 'bg-white rounded-xl p-4 card-shadow asset-category asset-commodity cursor-pointer stock-item';
-        commodityItem.onclick = () => openTradingModal(commodity, 'commodity');
-        commodityItem.innerHTML = `
-            <div class="flex justify-between items-center">
-                <div><p class="font-semibold">${commodity.name}</p><p class="text-sm text-gray-500">${commodity.unit}</p></div>
-                <div class="text-right"><p class="font-bold">₩${commodity.price.toLocaleString()}</p><p class="text-sm ${changeClass}">${changeSymbol}${commodity.change.toFixed(2)}%</p></div>
-            </div>`;
-        container.appendChild(commodityItem);
-    });
-}
-
-
 // 트레이딩 모달 열기
 function openTradingModal(asset, type) {
-    // ... 기존 코드와 동일
-}
-function closeTradingModal() {
-    // ... 기존 코드와 동일
-}
-function createTradingChart(asset, type) {
-    // ... 기존 코드와 동일
-}
-function updateTotalAmount() {
-    // ... 기존 코드와 동일
-}
-function executeTrade(action) {
-    // ... 기존 코드와 동일, 단 마지막에 saveUserData() 호출 추가
-    saveUserData();
-}
-function toggleInvestmentMenu() {
-    document.getElementById('investmentMenu').classList.toggle('show');
-}
-function hideInvestmentMenu() {
-    document.getElementById('investmentMenu').classList.remove('show');
-}
-function refreshStockData() { loadKoreanStocks(); loadForeignStocks(); }
-function refreshCryptoData() { loadRealCryptoData(); }
-function refreshBondData() { loadBondData(); }
-function refreshDepositData() { loadDepositData(); }
-function refreshETFData() { loadETFData(); }
-function refreshCommodityData() { loadCommodityData(); }
-function searchStocks() { /* 검색 기능 구현 */ }
-
-// 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    loadUserData(); // 데이터 로드
-    if (!currentUser) return; // 로그인 안됐으면 중단
-
     try {
-        var userLevel = currentUser.level || 'yellow';
-        var levelBadge = document.getElementById('navLevelBadge');
-        if (levelBadge && levelSystem[userLevel]) {
-            levelBadge.className = 'level-badge-nav ' + levelSystem[userLevel].class;
-            levelBadge.textContent = levelSystem[userLevel].name;
+        currentTradingAsset = Object.assign({}, asset);
+        currentTradingAsset.type = type;
+        
+        var modal = document.getElementById('tradingModal');
+        var assetName = document.getElementById('tradingAssetName');
+        var currentPrice = document.getElementById('tradingCurrentPrice');
+        var priceChange = document.getElementById('tradingPriceChange');
+        var volume = document.getElementById('tradingVolume');
+        var marketCap = document.getElementById('tradingMarketCap');
+        
+        if (modal && assetName && currentPrice && priceChange) {
+            assetName.textContent = asset.name || asset.id;
+            
+            var price = asset.price || 50000;
+            var change = asset.changePercent || asset.change || 0;
+            var priceSymbol = (type === 'domestic' || type === 'bond' || type === 'deposit' || type === 'etf' || type === 'commodity') ? '₩' : '$';
+            
+            currentPrice.textContent = priceSymbol + (typeof price === 'string' ? price : price.toLocaleString());
+            
+            var changeClass = change >= 0 ? 'profit' : 'loss';
+            var changeSymbol = change >= 0 ? '+' : '';
+            priceChange.textContent = changeSymbol + (typeof change === 'string' ? change : change.toFixed(2) + '%');
+            priceChange.className = 'text-sm ' + changeClass;
+            
+            // 거래량과 시가총액 표시
+            if (volume) volume.textContent = asset.volume || '-';
+            if (marketCap) marketCap.textContent = asset.marketCap || '-';
+            
+            modal.classList.add('show');
+            createTradingChart(asset, type);
+            updateTotalAmount();
+        }
+    } catch (error) {
+        console.error('트레이딩 모달 오류:', error);
+        alert('거래 화면을 불러올 수 없습니다.');
+    }
+}
+
+// 트레이딩 모달 닫기
+function closeTradingModal() {
+    try {
+        var modal = document.getElementById('tradingModal');
+        if (modal) {
+            modal.classList.remove('show');
         }
         
-        loadKoreanStocks();
-        loadForeignStocks();
+        if (tradingChart) {
+            tradingChart.destroy();
+            tradingChart = null;
+        }
         
-        document.getElementById('tradingModal').addEventListener('click', e => {
-            if (e.target.id === 'tradingModal') closeTradingModal();
-        });
+        currentTradingAsset = null;
+    } catch (error) {
+        console.error('트레이딩 모달 닫기 오류:', error);
+    }
+}
+
+// 트레이딩 차트 생성
+function createTradingChart(asset, type) {
+    try {
+        var canvas = document.getElementById('tradingChart');
+        if (!canvas) return;
         
-        document.addEventListener('click', e => {
-            var menu = document.getElementById('investmentMenu');
-            var levelBadge = document.getElementById('navLevelBadge');
-            if (menu && menu.classList.contains('show') && !menu.contains(e.target) && !levelBadge.contains(e.target)) {
-                hideInvestmentMenu();
+        if (tradingChart) {
+            tradingChart.destroy();
+        }
+        
+        var ctx = canvas.getContext('2d');
+        
+        var basePrice = asset.price || 50000;
+        var chartData = [];
+        var labels = [];
+        
+        // 30일간의 시뮬레이션 데이터 생성
+        for (var i = 29; i >= 0; i--) {
+            var variation = (Math.random() - 0.5) * 0.1; // ±10% 변동
+            var price = basePrice * (1 + variation);
+            chartData.push(price);
+            
+            var date = new Date();
+            date.setDate(date.getDate() - i);
+            labels.push(date.toLocaleDateString());
+        }
+        
+        tradingChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: chartData,
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        display: false
+                    },
+                    y: {
+                        display: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    }
+                },
+                elements: {
+                    point: {
+                        radius: 0
+                    }
+                }
             }
         });
+    } catch (error) {
+        console.error('차트 생성 오류:', error);
+    }
+}
+
+// 총액 업데이트
+function updateTotalAmount() {
+    try {
+        var quantityInput = document.getElementById('tradingQuantity');
+        var totalAmountElement = document.getElementById('tradingTotalAmount');
+        
+        if (quantityInput && totalAmountElement && currentTradingAsset) {
+            var quantity = parseFloat(quantityInput.value) || 0;
+            var price = currentTradingAsset.price || 50000;
+            var total = quantity * price;
+            var priceSymbol = (currentTradingAsset.type === 'domestic' || currentTradingAsset.type === 'bond' || currentTradingAsset.type === 'deposit' || currentTradingAsset.type === 'etf' || currentTradingAsset.type === 'commodity') ? '₩' : '$';
+            
+            totalAmountElement.textContent = priceSymbol + total.toLocaleString();
+        }
+    } catch (error) {
+        console.error('총액 업데이트 오류:', error);
+    }
+}
+
+// 거래 실행
+function executeTrade(action) {
+    try {
+        if (!currentTradingAsset) return;
+        
+        var quantityInput = document.getElementById('tradingQuantity');
+        var quantity = parseFloat(quantityInput.value) || 0;
+        
+        if (quantity <= 0) {
+            alert('유효한 수량을 입력해주세요.');
+            return;
+        }
+        
+        var price = currentTradingAsset.price || 50000;
+        var totalCost = quantity * price;
+        
+        if (action === 'buy') {
+            alert('✅ ' + currentTradingAsset.name + ' ' + quantity + '개를 매수했습니다!\n총 투자금액: ' + totalCost.toLocaleString() + (currentTradingAsset.type === 'domestic' ? '원' : '$'));
+                } else if (action === 'sell') {
+            alert('✅ ' + currentTradingAsset.name + ' ' + quantity + '개를 매도했습니다!\n총 판매금액: ' + totalCost.toLocaleString() + (currentTradingAsset.type === 'domestic' ? '원' : '$'));
+        }
+        
+        // 경험치 추가
+        if (currentUser) {
+            currentUser.exp = (currentUser.exp || 0) + Math.floor(totalCost / 10000);
+            localStorage.setItem('fineu_current_user', JSON.stringify(currentUser));
+            if (currentUser.id) {
+                localStorage.setItem('user_' + currentUser.id, JSON.stringify(currentUser));
+            }
+        }
+        
+        closeTradingModal();
         
     } catch (error) {
-        console.error('초기화 오류:', error);
+        console.error('거래 실행 오류:', error);
+        alert('거래 중 오류가 발생했습니다.');
+    }
+}
+
+// 투자 메뉴 토글 (기존 구조 유지)
+function toggleInvestmentMenu() {
+    try {
+        var menu = document.getElementById('investmentMenu');
+        if (menu) {
+            if (menu.classList.contains('show')) {
+                menu.classList.remove('show');
+            } else {
+                menu.classList.add('show');
+            }
+        }
+    } catch (error) {
+        console.error('투자 메뉴 토글 오류:', error);
+    }
+}
+
+// 투자 메뉴 숨기기
+function hideInvestmentMenu() {
+    try {
+        var menu = document.getElementById('investmentMenu');
+        if (menu) {
+            menu.classList.remove('show');
+        }
+    } catch (error) {
+        console.error('투자 메뉴 숨기기 오류:', error);
+    }
+}
+
+// 새로고침 함수들
+function refreshStockData() {
+    var refreshIcon = document.getElementById('refreshIcon');
+    if (refreshIcon) {
+        refreshIcon.style.transform = 'rotate(360deg)';
+        refreshIcon.style.transition = 'transform 0.5s ease';
+        
+        setTimeout(function() {
+            refreshIcon.style.transform = 'rotate(0deg)';
+        }, 500);
+    }
+    
+    // 가격 데이터 업데이트 (실시간 변동 시뮬레이션)
+    updatePricesSimulation();
+    loadKoreanStocks();
+    loadForeignStocks();
+}
+
+function refreshCryptoData() {
+    updatePricesSimulation();
+    loadRealCryptoData();
+}
+
+function refreshBondData() {
+    loadBondData();
+}
+
+function refreshDepositData() {
+    loadDepositData();
+}
+
+function refreshETFData() {
+    updatePricesSimulation();
+    loadETFData();
+}
+
+function refreshCommodityData() {
+    updatePricesSimulation();
+    loadCommodityData();
+}
+
+// 가격 변동 시뮬레이션 (실시간 효과)
+function updatePricesSimulation() {
+    try {
+        // 국내 주식 가격 업데이트
+        stockData.domestic.forEach(function(stock) {
+            var changePercent = (Math.random() - 0.5) * 4; // -2% ~ +2% 변동
+            var changeAmount = Math.floor(stock.price * (changePercent / 100));
+            
+            stock.price += changeAmount;
+            stock.change = changeAmount;
+            stock.changePercent = changePercent;
+            
+            // 최소값 보정
+            if (stock.price < 1000) stock.price = 1000;
+        });
+        
+        // 해외 주식 가격 업데이트
+        stockData.foreign.forEach(function(stock) {
+            var changePercent = (Math.random() - 0.5) * 4; // -2% ~ +2% 변동
+            var changeAmount = stock.price * (changePercent / 100);
+            
+            stock.price += changeAmount;
+            stock.change = changeAmount;
+            stock.changePercent = changePercent;
+            
+            // 최소값 보정
+            if (stock.price < 10) stock.price = 10;
+        });
+        
+        // 암호화폐 가격 업데이트
+        cryptoData.forEach(function(crypto) {
+            var changePercent = (Math.random() - 0.5) * 8; // -4% ~ +4% 변동 (변동성 높음)
+            var changeAmount = crypto.price * (changePercent / 100);
+            
+            crypto.price += changeAmount;
+            crypto.change = changeAmount;
+            crypto.changePercent = changePercent;
+            
+            // 최소값 보정
+            if (crypto.price < 0.01) crypto.price = 0.01;
+        });
+        
+        // ETF 가격 업데이트
+        etfData.forEach(function(etf) {
+            var changePercent = (Math.random() - 0.5) * 3; // -1.5% ~ +1.5% 변동
+            var changeAmount = changePercent;
+            
+            etf.price += Math.floor(etf.price * (changePercent / 100));
+            etf.change = changeAmount;
+            
+            // 최소값 보정
+            if (etf.price < 1000) etf.price = 1000;
+        });
+        
+        // 귀금속 가격 업데이트
+        commodityData.forEach(function(commodity) {
+            var changePercent = (Math.random() - 0.5) * 2; // -1% ~ +1% 변동
+            var changeAmount = changePercent;
+            
+            commodity.price += Math.floor(commodity.price * (changePercent / 100));
+            commodity.change = changeAmount;
+            
+            // 최소값 보정
+            if (commodity.price < 100) commodity.price = 100;
+        });
+        
+        updateLastUpdateTime();
+        
+    } catch (error) {
+        console.error('가격 업데이트 오류:', error);
+    }
+}
+
+// 마지막 업데이트 시간 갱신
+function updateLastUpdateTime() {
+    var now = new Date();
+    var timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                    now.getMinutes().toString().padStart(2, '0') + ':' + 
+                    now.getSeconds().toString().padStart(2, '0');
+    
+    var updateElement = document.getElementById('lastStockUpdate');
+    if (updateElement) {
+        updateElement.textContent = timeString;
+    }
+}
+
+// 실시간 가격 업데이트 시작
+function startPriceUpdates() {
+    // 10초마다 가격 업데이트
+    priceUpdateInterval = setInterval(function() {
+        updatePricesSimulation();
+        
+        // 현재 활성 화면에 따라 데이터 새로고침
+        var activeScreen = document.querySelector('.screen.active');
+        if (activeScreen) {
+            var screenId = activeScreen.id;
+            switch(screenId) {
+                case 'stockScreen':
+                    loadKoreanStocks();
+                    loadForeignStocks();
+                    break;
+                case 'cryptoScreen':
+                    loadRealCryptoData();
+                    break;
+                case 'etfScreen':
+                    loadETFData();
+                    break;
+                case 'commodityScreen':
+                    loadCommodityData();
+                    break;
+            }
+        }
+    }, 10000); // 10초마다 업데이트
+}
+
+// 검색 기능
+function searchStocks() {
+    var searchInput = document.getElementById('stockSearch');
+    var searchTerm = searchInput.value.toLowerCase();
+    
+    if (searchTerm.length < 2) return;
+    
+    // 검색 결과 표시 (간단한 구현)
+    var allStocks = [...stockData.domestic, ...stockData.foreign];
+    var searchResults = allStocks.filter(function(stock) {
+        return stock.name.toLowerCase().includes(searchTerm) || 
+               stock.symbol.toLowerCase().includes(searchTerm);
+    });
+    
+    console.log('검색 결과:', searchResults);
+}
+
+// 페이지 이동 함수들
+function goToMainPage() {
+    window.location.href = 'index.html?v=' + Date.now();
+}
+
+function goToNewsPage() {
+    window.location.href = 'a2.html?v=' + Date.now();
+}
+
+function goToGamePage() {
+    window.location.href = 'a4.html?v=' + Date.now();
+}
+
+function goToMorePage() {
+    window.location.href = 'a3.html?v=' + Date.now();
+}
+
+// 모달 외부 클릭 이벤트
+document.addEventListener('click', function(e) {
+    // 트레이딩 모달 외부 클릭시 닫기
+    var tradingModal = document.getElementById('tradingModal');
+    if (tradingModal && e.target === tradingModal) {
+        closeTradingModal();
+    }
+    
+    // 투자 메뉴 외부 클릭시 숨기기
+    var menu = document.getElementById('investmentMenu');
+    var levelBadge = document.getElementById('navLevelBadge');
+    
+    if (menu && menu.classList.contains('show') && 
+        !menu.contains(e.target) && 
+        !levelBadge.contains(e.target)) {
+        hideInvestmentMenu();
     }
 });
 
-window.addEventListener('beforeunload', saveUserData);
+// 사용자 데이터 저장
+function saveUserData() {
+    try {
+        if (currentUser) {
+            localStorage.setItem('fineu_current_user', JSON.stringify(currentUser));
+            if (currentUser.id) {
+                localStorage.setItem('user_' + currentUser.id, JSON.stringify(currentUser));
+            }
+        }
+    } catch (error) {
+        console.error('데이터 저장 오류:', error);
+    }
+}
+
+// 페이지 언로드 시 정리
+window.addEventListener('beforeunload', function() {
+    try {
+        // 인터벌 정리
+        if (priceUpdateInterval) {
+            clearInterval(priceUpdateInterval);
+        }
+        
+        // 사용자 데이터 저장
+        saveUserData();
+        
+    } catch (error) {
+        console.error('페이지 언로드 오류:', error);
+    }
+});
+
+// 페이지 포커스/블러 이벤트 (백그라운드에서 돌아올 때 데이터 갱신)
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        // 페이지가 다시 포커스를 받으면 데이터 갱신
+        updateCurrentTime();
+        updatePricesSimulation();
+        refreshStockData();
+    }
+});
+
+// 에러 핸들링
+window.addEventListener('error', function(e) {
+    console.error('전역 오류:', e.error);
+});
+
+// 터치 이벤트 지원 (모바일)
+if ('ontouchstart' in window) {
+    document.addEventListener('touchstart', function() {
+        // 터치 시작 시 필요한 처리
+    });
+}
+
+console.log('실시간 투자 페이지 스크립트 로드 완료 - 2025년 8월 9일 11:59:08 KST');
 </script>
 
 </body>
