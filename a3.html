@@ -28,6 +28,14 @@
         .card-shadow {
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
+        .btn-primary {
+            background: linear-gradient(135deg, #4A6FA5, #6B8DC7);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+        }
         
         .level-badge-nav {
             width: 56px;
@@ -46,27 +54,7 @@
             transform: translateX(-50%);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 10;
-            cursor: pointer;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.3s ease;
-        }
-        
-        .level-badge-nav::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            animation: glowing-border 3s infinite linear;
-        }
-        
-        @keyframes glowing-border {
-            0% { border-color: rgba(255, 255, 255, 0.2); transform: scale(1); }
-            50% { border-color: rgba(255, 255, 255, 0.8); transform: scale(1.05); }
-            100% { border-color: rgba(255, 255, 255, 0.2); transform: scale(1); }
+            animation: glow 2s ease-in-out infinite alternate;
         }
         
         .level-yellow { background: linear-gradient(135deg, #FCD34D, #F59E0B); }
@@ -76,6 +64,15 @@
         .level-brown { background: linear-gradient(135deg, #A16207, #92400E); }
         .level-black { background: linear-gradient(135deg, #374151, #111827); }
         .level-red { background: linear-gradient(135deg, #EF4444, #DC2626); }
+        
+        @keyframes glow {
+            from {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            to {
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 15px rgba(255,255,255,0.3);
+            }
+        }
         
         .bottom-navigation {
             position: fixed;
@@ -231,7 +228,7 @@
     <div class="min-h-screen bg-gray-100">
         <div class="bg-white shadow-sm p-4">
             <div class="flex items-center justify-between max-w-md mx-auto">
-                <button onclick="navigateToPage('index.html')" class="text-gray-600">
+                <button onclick="goToHome()" class="text-gray-600">
                     <i class="fas fa-arrow-left text-xl"></i>
                 </button>
                 <h1 class="text-xl font-bold">더보기</h1>
@@ -281,7 +278,7 @@
             </div>
 
             <!-- e-금융센터 -->
-            <div class="service-card" onclick="openECenterModal()">
+            <div class="service-card mb-24" onclick="openECenterModal()">
                 <div class="service-icon icon-ecenter">
                     <i class="fas fa-laptop"></i>
                 </div>
@@ -292,31 +289,29 @@
                     <i class="fas fa-external-link-alt text-purple-500"></i>
                 </div>
             </div>
-
-            <div style="height: 100px;"></div>
         </div>
 
         <!-- 하단 네비게이션 -->
         <div class="bottom-navigation">
             <div class="nav-container">
-                <button onclick="navigateToPage('index.html')" class="nav-item">
+                <button onclick="goToHome()" class="nav-item">
                     <i class="fas fa-home text-gray-400"></i>
                     <span class="text-gray-400">홈</span>
                 </button>
-                <button onclick="navigateToPage('a2.html')" class="nav-item">
+                <button onclick="goToNews()" class="nav-item">
                     <i class="fas fa-newspaper text-gray-400"></i>
                     <span class="text-gray-400">뉴스</span>
                 </button>
                 <div class="nav-center">
-                    <div id="navLevelBadge" class="level-badge-nav level-yellow" onclick="navigateToPage('a5.html')">
+                    <div onclick="goToGrade()" class="level-badge-nav level-yellow" id="navLevelBadge">
                         YELLOW
                     </div>
                 </div>
-                <button onclick="navigateToPage('a4.html')" class="nav-item">
+                <button onclick="goToGame()" class="nav-item">
                     <i class="fas fa-gamepad text-gray-400"></i>
                     <span class="text-gray-400">게임</span>
                 </button>
-                <button onclick="navigateToPage('a3.html')" class="nav-item active">
+                <button onclick="goToMore()" class="nav-item active">
                     <i class="fas fa-ellipsis-h"></i>
                     <span>더보기</span>
                 </button>
@@ -442,57 +437,79 @@
 </div>
 
 <script>
-var currentUser = null;
+var currentUser = JSON.parse(localStorage.getItem('fineu_current_user')) || null;
 
-var levelSystem = {
-    yellow: { name: 'YELLOW', class: 'level-yellow' },
-    orange: { name: 'ORANGE', class: 'level-orange' },
-    green: { name: 'GREEN', class: 'level-green' },
-    blue: { name: 'BLUE', class: 'level-blue' },
-    brown: { name: 'BROWN', class: 'level-brown' },
-    black: { name: 'BLACK', class: 'level-black' },
-    red: { name: 'RED', class: 'level-red' }
-};
+// 페이지 로드 시 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    updateUserLevel();
+});
 
-// --- 데이터 연동 로직 ---
-function loadUserData() {
-    try {
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-        } else {
-            window.location.href = 'index.html';
-        }
-    } catch (error) {
-        console.error("데이터 로드 오류:", error);
-        window.location.href = 'index.html';
-    }
-}
-
-function saveUserData() {
+// 사용자 레벨 업데이트
+function updateUserLevel() {
     if (currentUser) {
-        try {
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        } catch (error) {
-            console.error("데이터 저장 오류:", error);
+        var levelBadge = document.getElementById('navLevelBadge');
+        if (levelBadge) {
+            var levelClass = 'level-' + (currentUser.level || 'yellow');
+            var levelName = (currentUser.level || 'yellow').toUpperCase();
+            levelBadge.className = 'level-badge-nav ' + levelClass;
+            levelBadge.textContent = levelName;
         }
     }
 }
 
-function navigateToPage(page) {
-    saveUserData();
-    window.location.href = page + '?v=' + new Date().getTime();
+// 페이지 이동 함수들
+function goToHome() {
+    window.location.href = 'index.html?v=' + Date.now();
+}
+
+function goToNews() {
+    window.location.href = 'a2.html?v=' + Date.now();
+}
+
+function goToGrade() {
+    window.location.href = 'a5.html?v=' + Date.now();
+}
+
+function goToGame() {
+    window.location.href = 'a4.html?v=' + Date.now();
+}
+
+function goToMore() {
+    // 현재 페이지이므로 아무것도 하지 않음
 }
 
 // 모달 관련 함수들
-function openFSSModal() { document.getElementById('fssModal').classList.add('show'); }
-function closeFSSModal() { document.getElementById('fssModal').classList.remove('show'); }
-function openConsumerModal() { document.getElementById('consumerModal').classList.add('show'); }
-function closeConsumerModal() { document.getElementById('consumerModal').classList.remove('show'); }
-function openDartModal() { document.getElementById('dartModal').classList.add('show'); }
-function closeDartModal() { document.getElementById('dartModal').classList.remove('show'); }
-function openECenterModal() { document.getElementById('eCenterModal').classList.add('show'); }
-function closeECenterModal() { document.getElementById('eCenterModal').classList.remove('show'); }
+function openFSSModal() {
+    document.getElementById('fssModal').classList.add('show');
+}
+
+function closeFSSModal() {
+    document.getElementById('fssModal').classList.remove('show');
+}
+
+function openConsumerModal() {
+    document.getElementById('consumerModal').classList.add('show');
+}
+
+function closeConsumerModal() {
+    document.getElementById('consumerModal').classList.remove('show');
+}
+
+function openDartModal() {
+    document.getElementById('dartModal').classList.add('show');
+}
+
+function closeDartModal() {
+    document.getElementById('dartModal').classList.remove('show');
+}
+
+function openECenterModal() {
+    document.getElementById('eCenterModal').classList.add('show');
+}
+
+function closeECenterModal() {
+    document.getElementById('eCenterModal').classList.remove('show');
+}
 
 // 모달 외부 클릭시 닫기
 document.addEventListener('click', function(e) {
@@ -503,21 +520,6 @@ document.addEventListener('click', function(e) {
         }
     });
 });
-
-// 페이지 로드시 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    loadUserData();
-    if (!currentUser) return;
-
-    var levelBadge = document.getElementById('navLevelBadge');
-    var userLevel = currentUser.level || 'yellow';
-    if (levelBadge && levelSystem[userLevel]) {
-        levelBadge.className = 'level-badge-nav ' + levelSystem[userLevel].class;
-        levelBadge.textContent = levelSystem[userLevel].name;
-    }
-});
-
-window.addEventListener('beforeunload', saveUserData);
 </script>
 
 </body>
