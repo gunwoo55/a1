@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>등급 & 가계부 - FinLearn</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Navigation */
+        .nav {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .nav-links a.active {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .nav-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #667eea;
+        }
+
+        .level-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+            animation: glowPulse 2s infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { 
+                box-shadow: 0 0 5px currentColor;
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+                transform: scale(1.05);
+            }
+        }
+
+        .glow {
+            animation: glowPulse 2s infinite;
+        }
+
+        .level-yellow { background: #f39c12; }
+        .level-orange { background: #e67e22; }
+        .level-green { background: #27ae60; }
+        .level-blue { background: #3498db; }
+        .level-brown { background: #8b4513; }
+        .level-black { background: #2c3e50; }
+        .level-red { background: #e74c3c; }
+
+        /* Page Header */
+        .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .page-header h1 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .level-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .current-level {
+            text-align: center;
+        }
+
+        .level-display {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .exp-info {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .exp-bar {
+            width: 100%;
+            height: 25px;
+            background: #e1e1e1;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .exp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header h3 {
+            color: #667eea;
+            font-size: 1.3rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-success {
+            background: #27ae60;
+        }
+
+        .btn-success:hover {
+            background: #219a52;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+        }
+
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+
+        /* 예적금 상품 */
+        .product-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+
+        .product-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .product-rate {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #e74c3c;
+            margin: 0 1rem;
+        }
+
+        /* 가계부 */
+        .ledger-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.6rem;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .transaction-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-memo {
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+        }
+
+        .transaction-details {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .transaction-amount {
+            font-weight: bold;
+            margin: 0 1rem;
+        }
+
+        .income {
+            color: #27ae60;
+        }
+
+        .expense {
+            color: #e74c3c;
+        }
+
+        .transaction-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* 차트 영역 */
+        .chart-container {
+            height: 300px;
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .chart-placeholder {
+            text-align: center;
+            color: #666;
+        }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .summary-card {
+            text-align: center;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 10px;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            min-width: 400px;
+        }
+
+        .modal h3 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-modal {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .level-info {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-brand">💰 FinLearn</div>
+            <ul class="nav-links">
+                <li><a href="index.html">홈</a></li>
+                <li><a href="a1.html">투자</a></li>
+                <li><a href="a2.html">뉴스</a></li>
+                <li><a href="a3.html">더보기</a></li>
+                <li><a href="a4.html">게임</a></li>
+                <li><a href="a5.html" class="active">등급</a></li>
+            </ul>
+            <div class="nav-profile">
+                <img id="navProfileImg" class="profile-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23667eea'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='16'%3E👤%3C/text%3E%3C/svg%3E" alt="프로필">
+                <span id="navLevelBadge" class="level-badge glow level-yellow">YELLOW</span>
+            </div>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>🏆 등급 & 가계부</h1>
+            <p>현재 등급을 확인하고 가계부를 관리하세요!</p>
+            
+            <div class="level-info">
+                <div class="current-level">
+                    <div id="levelDisplay" class="level-display level-badge glow level-yellow">YELLOW</div>
+                    <div>현재 등급</div>
+                </div>
+                
+                <div class="exp-info">
+                    <div>경험치 (EXP)</div>
+                    <div class="exp-bar">
+                        <div id="expFill" class="exp-fill" style="width: 0%"></div>
+                    </div>
+                    <div id="expText">EXP: 0 / 3000</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- 예적금 상품 -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h3>💰 예적금 상품</h3>
+                </div>
+                
+                <div class="product-list">
+                    <div class="product-item">
+                        <div class="product-info">
+                            <div class="product-name">정기예금 1년</div>
+                            <div class="product-details">최소 100만원 • 만기 12개월</div>
+                        </div>
+                        <div class="product-rate">3.5%</div>
+                        <button class="btn btn-success" onclick="purchaseProduct('정기예금 1년', 1000000, 3.5)">가입</button>
+                    </div>
+                    
+                    <div class="product-item">
+                        <div class="product-info">
+                            <div class="product-name">적금 1년</div>
+                            <div class="product-details">월 50만원 • 12개월</div>
+                        </div>
+                        <div class="product-rate">3.8%</div>
+                        <button class="btn btn-success" onclick="purchaseProduct('적금 1년', 500000, 3.8)">가입</button>
+                    </div>
+                    
+                    <div class="product-item">
+                        <div class="product-info">
+                            <div class="product-name">정기예금 2년</div>
+                            <div class="product-details">최소 200만원 • 만기 24개월</div>
+                        </div>
+                        <div class="product-rate">4.0%</div>
+                        <button class="btn btn-success" onclick="purchaseProduct('정기예금 2년', 2000000, 4.0)">가입</button>
+                    </div>
+                    
+                    <div class="product-item">
+                        <div class="product-info">
+                            <div class="product-name">고금리 정기예금</div>
+                            <div class="product-details">최소 500만원 • 만기 6개월</div>
+                        </div>
+                        <div class="product-rate">4.5%</div>
+                        <button class="btn btn-success" onclick="purchaseProduct('고금리 정기예금', 5000000, 4.5)">가입</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 가계부 -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h3>📊 가계부</h3>
+                    <button class="btn" onclick="openTransactionModal()">거래 추가</button>
+                </div>
+                
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div id="totalIncome" class="summary-value">0원</div>
+                        <div class="summary-label">총 수입</div>
+                    </div>
+                    <div class="summary-card">
+                        <div id="totalExpense" class="summary-value">0원</div>
+                        <div class="summary-label">총 지출</div>
+                    </div>
+                    <div class="summary-card">
+                        <div id="netAmount" class="summary-value">0원</div>
+                        <div class="summary-label">순 자산</div>
+                    </div>
+                </div>
+                
+                <div id="transactionList" class="transaction-list">
+                    <div class="chart-placeholder">거래 내역이 없습니다.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 차트 섹션 -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h3>📈 지출 분석</h3>
+            </div>
+            <div class="chart-container">
+                <div class="chart-placeholder">
+                    📊 차트가 여기에 표시됩니다<br>
+                    <small>거래 내역이 추가되면 지출 패턴을 분석해서 보여드립니다</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Modal -->
+    <div id="transactionModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">거래 추가</h3>
+            <form id="transactionForm">
+                <div class="form-group">
+                    <label for="transactionType">구분</label>
+                    <select id="transactionType" required>
+                        <option value="income">수입</option>
+                        <option value="expense">지출</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transactionAmount">금액</label>
+                    <input type="number" id="transactionAmount" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="transactionMemo">내용</label>
+                    <input type="text" id="transactionMemo" required>
+                </div>
+                <div class="form-group">
+                    <label for="transactionDate">날짜</label>
+                    <input type="date" id="transactionDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="transactionCategory">카테고리</label>
+                    <select id="transactionCategory" required>
+                        <option value="식비">식비</option>
+                        <option value="교통비">교통비</option>
+                        <option value="생활비">생활비</option>
+                        <option value="의료비">의료비</option>
+                        <option value="교육비">교육비</option>
+                        <option value="투자">투자</option>
+                        <option value="급여">급여</option>
+                        <option value="부수입">부수입</option>
+                        <option value="기타">기타</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-modal" style="background: #667eea; color: white;">저장</button>
+                    <button type="button" class="btn-modal" style="background: #95a5a6; color: white;" onclick="closeTransactionModal()">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+        let editingIndex = -1;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+            loadTransactions();
+            updateSummary();
+            setupEventListeners();
+        });
+
+        function initializePage() {
+            // Load user interface if FinLearnUtils is available
+            if (window.FinLearnUtils) {
+                updateUserInterface();
+            }
+            
+            // Set default date to today
+            document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        function updateUserInterface() {
+            const currentUser = getCurrentUser();
+            if (currentUser && currentUser.isLoggedIn) {
+                // Update profile image
+                if (currentUser.profileImage) {
+                    document.getElementById('navProfileImg').src = currentUser.profileImage;
+                }
+                
+                // Update level display
+                const level = getLevelFromExp(currentUser.exp);
+                updateLevelDisplay(level, currentUser.exp);
+                
+                // Update nav badge
+                const badge = document.getElementById('navLevelBadge');
+                if (badge) {
+                    badge.textContent = LEVEL_NAMES[level];
+                    badge.className = `level-badge glow level-${level}`;
+                }
+            }
+        }
+
+        function getCurrentUser() {
+            const userData = localStorage.getItem('currentUser');
+            return userData ? JSON.parse(userData) : null;
+        }
+
+        function getLevelFromExp(exp) {
+            const levels = ['yellow', 'orange', 'green', 'blue', 'brown', 'black', 'red'];
+            const thresholds = [0, 3000, 6000, 10000, 15000, 25000, 50000];
+            
+            for (let i = levels.length - 1; i >= 0; i--) {
+                if (exp >= thresholds[i]) {
+                    return levels[i];
+                }
+            }
+            return 'yellow';
+        }
+
+        const LEVEL_NAMES = {
+            yellow: 'YELLOW',
+            orange: 'ORANGE', 
+            green: 'GREEN',
+            blue: 'BLUE',
+            brown: 'BROWN',
+            black: 'BLACK',
+            red: 'RED'
+        };
+
+        function updateLevelDisplay(level, exp) {
+            const LEVEL_THRESHOLDS = {
+                yellow: 0, orange: 3000, green: 6000, blue: 10000, 
+                brown: 15000, black: 25000, red: 50000
+            };
+            
+            const levelDisplay = document.getElementById('levelDisplay');
+            levelDisplay.textContent = LEVEL_NAMES[level];
+            levelDisplay.className = `level-display level-badge glow level-${level}`;
+            
+            // Update experience bar
+            const currentThreshold = LEVEL_THRESHOLDS[level];
+            const nextLevel = getNextLevel(level);
+            const nextThreshold = nextLevel ? LEVEL_THRESHOLDS[nextLevel] : LEVEL_THRESHOLDS.red;
+            
+            const progress = nextLevel ? 
+                ((exp - currentThreshold) / (nextThreshold - currentThreshold)) * 100 : 100;
+            
+            document.getElementById('expFill').style.width = `${Math.min(progress, 100)}%`;
+            document.getElementById('expText').textContent = `EXP: ${exp} / ${nextThreshold}`;
+        }
+
+        function getNextLevel(currentLevel) {
+            const levels = ['yellow', 'orange', 'green', 'blue', 'brown', 'black', 'red'];
+            const currentIndex = levels.indexOf(currentLevel);
+            return currentIndex < levels.length - 1 ? levels[currentIndex + 1] : null;
+        }
+
+        function setupEventListeners() {
+            document.getElementById('transactionForm').addEventListener('submit', handleTransactionSubmit);
+            
+            // Close modal when clicking outside
+            document.getElementById('transactionModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeTransactionModal();
+                }
+            });
+        }
+
+        function purchaseProduct(productName, amount, rate) {
+            if (confirm(`${productName}에 가입하시겠습니까?\n금액: ${amount.toLocaleString()}원\n금리: ${rate}%`)) {
+                // Add expense transaction for the deposit/saving purchase
+                const transaction = {
+                    type: 'expense',
+                    amount: amount,
+                    memo: `${productName} 가입`,
+                    date: new Date().toISOString().split('T')[0],
+                    category: '투자'
+                };
+                
+                transactions.push(transaction);
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+                
+                // Add EXP for financial product purchase
+                if (window.FinLearnUtils) {
+                    const expGain = Math.min(500, Math.floor(amount / 10000));
+                    window.FinLearnUtils.addExp(expGain);
+                    updateUserInterface();
+                }
+                
+                // Update UI
+                loadTransactions();
+                updateSummary();
+                
+                alert(`${productName}에 성공적으로 가입했습니다!\n가계부에 지출 내역이 자동으로 기록되었습니다.`);
+            }
+        }
+
+        function openTransactionModal(index = -1) {
+            editingIndex = index;
+            
+            if (index >= 0) {
+                // Edit mode
+                const transaction = transactions[index];
+                document.getElementById('modalTitle').textContent = '거래 수정';
+                document.getElementById('transactionType').value = transaction.type;
+                document.getElementById('transactionAmount').value = transaction.amount;
+                document.getElementById('transactionMemo').value = transaction.memo;
+                document.getElementById('transactionDate').value = transaction.date;
+                document.getElementById('transactionCategory').value = transaction.category;
+            } else {
+                // Add mode
+                document.getElementById('modalTitle').textContent = '거래 추가';
+                document.getElementById('transactionForm').reset();
+                document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
+            }
+            
+            document.getElementById('transactionModal').style.display = 'block';
+        }
+
+        function closeTransactionModal() {
+            document.getElementById('transactionModal').style.display = 'none';
+            editingIndex = -1;
+        }
+
+        function handleTransactionSubmit(e) {
+            e.preventDefault();
+            
+            const transaction = {
+                type: document.getElementById('transactionType').value,
+                amount: parseInt(document.getElementById('transactionAmount').value),
+                memo: document.getElementById('transactionMemo').value,
+                date: document.getElementById('transactionDate').value,
+                category: document.getElementById('transactionCategory').value
+            };
+            
+            if (editingIndex >= 0) {
+                // Update existing transaction
+                transactions[editingIndex] = transaction;
+            } else {
+                // Add new transaction
+                transactions.push(transaction);
+                
+                // Add EXP for adding transaction
+                if (window.FinLearnUtils) {
+                    window.FinLearnUtils.addExp(10);
+                    updateUserInterface();
+                }
+            }
+            
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            loadTransactions();
+            updateSummary();
+            closeTransactionModal();
+        }
+
+        function editTransaction(index) {
+            openTransactionModal(index);
+        }
+
+        function deleteTransaction(index) {
+            if (confirm('이 거래 내역을 삭제하시겠습니까?')) {
+                transactions.splice(index, 1);
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+                loadTransactions();
+                updateSummary();
+            }
+        }
+
+        function loadTransactions() {
+            const container = document.getElementById('transactionList');
+            
+            if (transactions.length === 0) {
+                container.innerHTML = '<div class="chart-placeholder">거래 내역이 없습니다.</div>';
+                return;
+            }
+            
+            // Sort transactions by date (newest first)
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            const html = sortedTransactions.map((transaction, originalIndex) => {
+                const actualIndex = transactions.findIndex(t => 
+                    t.date === transaction.date && 
+                    t.amount === transaction.amount && 
+                    t.memo === transaction.memo
+                );
+                
+                const amountClass = transaction.type === 'income' ? 'income' : 'expense';
+                const amountSymbol = transaction.type === 'income' ? '+' : '-';
+                
+                return `
+                    <div class="transaction-item">
+                        <div class="transaction-info">
+                            <div class="transaction-memo">${transaction.memo}</div>
+                            <div class="transaction-details">
+                                ${transaction.category} • ${new Date(transaction.date).toLocaleDateString('ko-KR')}
+                            </div>
+                        </div>
+                        <div class="transaction-amount ${amountClass}">
+                            ${amountSymbol}${transaction.amount.toLocaleString()}원
+                        </div>
+                        <div class="transaction-actions">
+                            <button class="btn btn-small btn-warning" onclick="editTransaction(${actualIndex})">수정</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteTransaction(${actualIndex})">삭제</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+
+        function updateSummary() {
+            const totalIncome = transactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + t.amount, 0);
+            
+            const totalExpense = transactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0);
+            
+            const netAmount = totalIncome - totalExpense;
+            
+            document.getElementById('totalIncome').textContent = totalIncome.toLocaleString() + '원';
+            document.getElementById('totalExpense').textContent = totalExpense.toLocaleString() + '원';
+            document.getElementById('netAmount').textContent = netAmount.toLocaleString() + '원';
+            
+            // Update chart placeholder with summary
+            if (transactions.length > 0) {
+                updateChart();
+            }
+        }
+
+        function updateChart() {
+            // Simple chart placeholder - in real app would use Chart.js or similar
+            const categories = {};
+            const expenseTransactions = transactions.filter(t => t.type === 'expense');
+            
+            expenseTransactions.forEach(t => {
+                categories[t.category] = (categories[t.category] || 0) + t.amount;
+            });
+            
+            const topCategories = Object.entries(categories)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5);
+            
+            if (topCategories.length > 0) {
+                const chartHtml = `
+                    <div style="text-align: left; width: 100%; padding: 2rem;">
+                        <h4 style="margin-bottom: 1rem; color: #667eea;">지출 카테고리별 분석</h4>
+                        ${topCategories.map(([category, amount]) => `
+                            <div style="margin-bottom: 0.5rem;">
+                                <strong>${category}</strong>: ${amount.toLocaleString()}원
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                document.querySelector('.chart-container').innerHTML = chartHtml;
+            }
+        }
+    </script>
+</body>
+</html>

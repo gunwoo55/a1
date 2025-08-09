@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>금융 학습 플랫폼</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Navigation */
+        .nav {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .nav-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #667eea;
+        }
+
+        .level-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+            animation: glowPulse 2s infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { 
+                box-shadow: 0 0 5px currentColor;
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+                transform: scale(1.05);
+            }
+        }
+
+        .glow {
+            animation: glowPulse 2s infinite;
+        }
+
+        .level-yellow { background: #f39c12; }
+        .level-orange { background: #e67e22; }
+        .level-green { background: #27ae60; }
+        .level-blue { background: #3498db; }
+        .level-brown { background: #8b4513; }
+        .level-black { background: #2c3e50; }
+        .level-red { background: #e74c3c; }
+
+        /* Login Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            min-width: 400px;
+        }
+
+        .modal h2 {
+            margin-bottom: 1.5rem;
+            color: #667eea;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            margin-top: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .profile-card .profile-img {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1rem;
+            border: 4px solid #667eea;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .profile-card .profile-img:hover {
+            transform: scale(1.05);
+        }
+
+        .profile-info h2 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            transition: transform 0.3s;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .dashboard-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .dashboard-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .upload-hint {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .exp-bar {
+            width: 100%;
+            height: 20px;
+            background: #e1e1e1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .exp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .quick-btn {
+            padding: 0.5rem 1rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .quick-btn:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-brand">💰 FinLearn</div>
+            <ul class="nav-links">
+                <li><a href="index.html">홈</a></li>
+                <li><a href="a1.html">투자</a></li>
+                <li><a href="a2.html">뉴스</a></li>
+                <li><a href="a3.html">더보기</a></li>
+                <li><a href="a4.html">게임</a></li>
+                <li><a href="a5.html">등급</a></li>
+            </ul>
+            <div class="nav-profile">
+                <img id="navProfileImg" class="profile-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23667eea'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='16'%3E👤%3C/text%3E%3C/svg%3E" alt="프로필">
+                <span id="navLevelBadge" class="level-badge glow level-yellow">YELLOW</span>
+                <button id="loginBtn" class="btn" style="width: auto; padding: 0.5rem 1rem;">로그인</button>
+                <button id="logoutBtn" class="btn btn-secondary hidden" style="width: auto; padding: 0.5rem 1rem;">로그아웃</button>
+            </div>
+        </nav>
+
+        <!-- Profile Card -->
+        <div id="profileCard" class="profile-card hidden">
+            <img id="profileImg" class="profile-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Ccircle cx='60' cy='60' r='60' fill='%23667eea'/%3E%3Ctext x='60' y='75' text-anchor='middle' fill='white' font-size='40'%3E👤%3C/text%3E%3C/svg%3E" alt="프로필" onclick="document.getElementById('imageInput').click()">
+            <div class="upload-hint">프로필 이미지를 클릭해서 변경하세요</div>
+            <input type="file" id="imageInput" accept="image/*">
+            
+            <div class="profile-info">
+                <h2 id="userName">사용자</h2>
+                <span id="profileLevelBadge" class="level-badge glow level-yellow">YELLOW</span>
+                
+                <div class="exp-bar">
+                    <div id="expFill" class="exp-fill" style="width: 0%"></div>
+                </div>
+                <div id="expText">EXP: 0 / 3000</div>
+                
+                <div class="profile-stats">
+                    <div class="stat">
+                        <div id="totalInvestment" class="stat-value">0원</div>
+                        <div class="stat-label">총 투자금</div>
+                    </div>
+                    <div class="stat">
+                        <div id="totalProfit" class="stat-value">0원</div>
+                        <div class="stat-label">수익</div>
+                    </div>
+                    <div class="stat">
+                        <div id="totalTransactions" class="stat-value">0</div>
+                        <div class="stat-label">거래 횟수</div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions">
+                    <a href="a1.html" class="quick-btn">투자하기</a>
+                    <a href="a2.html" class="quick-btn">뉴스 보기</a>
+                    <a href="a5.html" class="quick-btn">가계부</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="dashboard hidden">
+            <div class="dashboard-card">
+                <h3>📈 오늘의 투자 현황</h3>
+                <p>현재 보유 중인 투자 상품과 수익률을 확인해보세요.</p>
+                <div class="quick-actions">
+                    <a href="a1.html" class="quick-btn">투자 페이지로</a>
+                </div>
+            </div>
+            
+            <div class="dashboard-card">
+                <h3>📰 금융 뉴스</h3>
+                <p>최신 금융 뉴스와 용어를 학습해보세요.</p>
+                <div class="quick-actions">
+                    <a href="a2.html" class="quick-btn">뉴스 페이지로</a>
+                </div>
+            </div>
+            
+            <div class="dashboard-card">
+                <h3>🎮 금융 게임</h3>
+                <p>재미있는 게임으로 금융 지식을 늘려보세요.</p>
+                <div class="quick-actions">
+                    <a href="a4.html" class="quick-btn">게임 페이지로</a>
+                </div>
+            </div>
+            
+            <div class="dashboard-card">
+                <h3>📊 가계부</h3>
+                <p>수입과 지출을 관리하고 분석해보세요.</p>
+                <div class="quick-actions">
+                    <a href="a5.html" class="quick-btn">가계부 페이지로</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h2>로그인</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">아이디</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">비밀번호</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn">로그인</button>
+                <button type="button" class="btn btn-secondary" onclick="closeLoginModal()">취소</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Level system configuration
+        const LEVEL_THRESHOLDS = {
+            yellow: 0,
+            orange: 3000,
+            green: 6000,
+            blue: 10000,
+            brown: 15000,
+            black: 25000,
+            red: 50000
+        };
+
+        const LEVEL_NAMES = {
+            yellow: 'YELLOW',
+            orange: 'ORANGE', 
+            green: 'GREEN',
+            blue: 'BLUE',
+            brown: 'BROWN',
+            black: 'BLACK',
+            red: 'RED'
+        };
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+        });
+
+        function initializeApp() {
+            checkLoginStatus();
+            updateUserInterface();
+        }
+
+        function setupEventListeners() {
+            // Login/logout buttons
+            document.getElementById('loginBtn').addEventListener('click', openLoginModal);
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Profile image upload
+            document.getElementById('imageInput').addEventListener('change', handleImageUpload);
+            
+            // Close modal when clicking outside
+            document.getElementById('loginModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeLoginModal();
+                }
+            });
+        }
+
+        function openLoginModal() {
+            document.getElementById('loginModal').style.display = 'block';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('loginForm').reset();
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Perform login
+            if (performLogin(username, password)) {
+                closeLoginModal();
+                updateUserInterface();
+            } else {
+                alert('로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.');
+            }
+        }
+
+        function performLogin(username, password) {
+            // Simple authentication - in real app this would be server-side
+            if (username === 'test' && password === 'test') {
+                const userData = {
+                    username: username,
+                    isLoggedIn: true,
+                    exp: LEVEL_THRESHOLDS.black, // Start at BLACK level for test user
+                    totalInvestment: 0,
+                    totalProfit: 0,
+                    totalTransactions: 0,
+                    profileImage: null
+                };
+                
+                // Load existing profile image if available
+                const existingUser = localStorage.getItem('currentUser');
+                if (existingUser) {
+                    const existing = JSON.parse(existingUser);
+                    if (existing.profileImage) {
+                        userData.profileImage = existing.profileImage;
+                    }
+                }
+                
+                localStorage.setItem('currentUser', JSON.stringify(userData));
+                return true;
+            }
+            
+            // For other users, check if they exist or create new account
+            const userData = {
+                username: username,
+                isLoggedIn: true,
+                exp: 0,
+                totalInvestment: 0,
+                totalProfit: 0,
+                totalTransactions: 0,
+                profileImage: null
+            };
+            
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            return true;
+        }
+
+        function logout() {
+            const currentUser = getCurrentUser();
+            if (currentUser) {
+                currentUser.isLoggedIn = false;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            }
+            updateUserInterface();
+        }
+
+        function checkLoginStatus() {
+            const currentUser = getCurrentUser();
+            return currentUser && currentUser.isLoggedIn;
+        }
+
+        function getCurrentUser() {
+            const userData = localStorage.getItem('currentUser');
+            return userData ? JSON.parse(userData) : null;
+        }
+
+        function updateUserInterface() {
+            const isLoggedIn = checkLoginStatus();
+            const currentUser = getCurrentUser();
+            
+            // Show/hide elements based on login status
+            document.getElementById('loginBtn').classList.toggle('hidden', isLoggedIn);
+            document.getElementById('logoutBtn').classList.toggle('hidden', !isLoggedIn);
+            document.getElementById('profileCard').classList.toggle('hidden', !isLoggedIn);
+            document.getElementById('dashboard').classList.toggle('hidden', !isLoggedIn);
+            
+            if (isLoggedIn && currentUser) {
+                // Update user info
+                document.getElementById('userName').textContent = currentUser.username;
+                
+                // Update level badges
+                const level = getLevelFromExp(currentUser.exp);
+                updateLevelBadges(level);
+                
+                // Update experience bar
+                updateExpBar(currentUser.exp, level);
+                
+                // Update profile stats
+                document.getElementById('totalInvestment').textContent = formatCurrency(currentUser.totalInvestment);
+                document.getElementById('totalProfit').textContent = formatCurrency(currentUser.totalProfit);
+                document.getElementById('totalTransactions').textContent = currentUser.totalTransactions;
+                
+                // Update profile images
+                if (currentUser.profileImage) {
+                    document.getElementById('profileImg').src = currentUser.profileImage;
+                    document.getElementById('navProfileImg').src = currentUser.profileImage;
+                }
+            }
+        }
+
+        function getLevelFromExp(exp) {
+            const levels = Object.keys(LEVEL_THRESHOLDS).reverse();
+            for (const level of levels) {
+                if (exp >= LEVEL_THRESHOLDS[level]) {
+                    return level;
+                }
+            }
+            return 'yellow';
+        }
+
+        function updateLevelBadges(level) {
+            const badges = ['navLevelBadge', 'profileLevelBadge'];
+            badges.forEach(badgeId => {
+                const badge = document.getElementById(badgeId);
+                if (badge) {
+                    badge.textContent = LEVEL_NAMES[level];
+                    badge.className = `level-badge glow level-${level}`;
+                }
+            });
+        }
+
+        function updateExpBar(exp, level) {
+            const currentThreshold = LEVEL_THRESHOLDS[level];
+            const nextLevel = getNextLevel(level);
+            const nextThreshold = nextLevel ? LEVEL_THRESHOLDS[nextLevel] : LEVEL_THRESHOLDS.red;
+            
+            const progress = nextLevel ? 
+                ((exp - currentThreshold) / (nextThreshold - currentThreshold)) * 100 : 100;
+            
+            document.getElementById('expFill').style.width = `${Math.min(progress, 100)}%`;
+            document.getElementById('expText').textContent = 
+                `EXP: ${exp} / ${nextThreshold}`;
+        }
+
+        function getNextLevel(currentLevel) {
+            const levels = Object.keys(LEVEL_THRESHOLDS);
+            const currentIndex = levels.indexOf(currentLevel);
+            return currentIndex < levels.length - 1 ? levels[currentIndex + 1] : null;
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageData = e.target.result;
+                    
+                    // Update profile images immediately
+                    document.getElementById('profileImg').src = imageData;
+                    document.getElementById('navProfileImg').src = imageData;
+                    
+                    // Save to localStorage
+                    const currentUser = getCurrentUser();
+                    if (currentUser) {
+                        currentUser.profileImage = imageData;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('ko-KR', {
+                style: 'currency',
+                currency: 'KRW'
+            }).format(amount);
+        }
+
+        function addExp(amount) {
+            const currentUser = getCurrentUser();
+            if (currentUser) {
+                const oldLevel = getLevelFromExp(currentUser.exp);
+                currentUser.exp += amount;
+                const newLevel = getLevelFromExp(currentUser.exp);
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                // Check if level up occurred
+                if (oldLevel !== newLevel) {
+                    alert(`레벨업! ${LEVEL_NAMES[oldLevel]} → ${LEVEL_NAMES[newLevel]}`);
+                }
+                
+                updateUserInterface();
+            }
+        }
+
+        // Global function for other pages to use
+        window.FinLearnUtils = {
+            getCurrentUser,
+            updateUserInterface,
+            addExp,
+            getLevelFromExp,
+            updateLevelBadges,
+            LEVEL_THRESHOLDS,
+            LEVEL_NAMES,
+            formatCurrency
+        };
+    </script>
+</body>
+</html>
