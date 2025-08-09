@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게임 - FinLearn</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Navigation */
+        .nav {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .nav-links a.active {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .nav-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #667eea;
+        }
+
+        .level-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+            animation: glowPulse 2s infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { 
+                box-shadow: 0 0 5px currentColor;
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+                transform: scale(1.05);
+            }
+        }
+
+        .glow {
+            animation: glowPulse 2s infinite;
+        }
+
+        .level-yellow { background: #f39c12; }
+        .level-orange { background: #e67e22; }
+        .level-green { background: #27ae60; }
+        .level-blue { background: #3498db; }
+        .level-brown { background: #8b4513; }
+        .level-black { background: #2c3e50; }
+        .level-red { background: #e74c3c; }
+
+        /* Page Header */
+        .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .page-header h1 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        /* Games Grid */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            transition: transform 0.3s;
+            text-align: center;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .game-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .game-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .game-card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-success {
+            background: #27ae60;
+        }
+
+        .btn-success:hover {
+            background: #219a52;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+        }
+
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+
+        /* Quiz Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .modal h3 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .question {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .option {
+            padding: 1rem;
+            background: #f8f9fa;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .option:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        .option.selected {
+            background: #e3f2fd;
+            border-color: #667eea;
+        }
+
+        .option.correct {
+            background: #e8f5e8;
+            border-color: #27ae60;
+        }
+
+        .option.incorrect {
+            background: #ffeaea;
+            border-color: #e74c3c;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-modal {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .leaderboard {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .leaderboard h3 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #667eea;
+            width: 3rem;
+        }
+
+        .player-info {
+            flex: 1;
+            margin-left: 1rem;
+        }
+
+        .player-name {
+            font-weight: 500;
+        }
+
+        .player-level {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .score {
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-brand">💰 FinLearn</div>
+            <ul class="nav-links">
+                <li><a href="index.html">홈</a></li>
+                <li><a href="a1.html">투자</a></li>
+                <li><a href="a2.html">뉴스</a></li>
+                <li><a href="a3.html">더보기</a></li>
+                <li><a href="a4.html" class="active">게임</a></li>
+                <li><a href="a5.html">등급</a></li>
+            </ul>
+            <div class="nav-profile">
+                <img id="navProfileImg" class="profile-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23667eea'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='16'%3E👤%3C/text%3E%3C/svg%3E" alt="프로필">
+                <span id="navLevelBadge" class="level-badge glow level-yellow">YELLOW</span>
+            </div>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>🎮 금융 게임</h1>
+            <p>재미있는 게임으로 금융 지식을 쌓고 EXP를 획득하세요!</p>
+        </div>
+
+        <!-- Games Grid -->
+        <div class="games-grid">
+            <!-- 금융 퀴즈 -->
+            <div class="game-card">
+                <div class="game-icon">🧠</div>
+                <h3>금융 지식 퀴즈</h3>
+                <p>다양한 금융 개념과 투자 지식을 퀴즈로 학습해보세요. 정답을 맞출 때마다 EXP를 획득할 수 있습니다.</p>
+                <div class="game-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="quizScore">0</div>
+                        <div class="stat-label">최고 점수</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="quizPlayed">0</div>
+                        <div class="stat-label">플레이 횟수</div>
+                    </div>
+                </div>
+                <button class="btn" onclick="startQuiz()">퀴즈 시작</button>
+            </div>
+
+            <!-- 투자 시뮬레이션 -->
+            <div class="game-card">
+                <div class="game-icon">📈</div>
+                <h3>투자 시뮬레이션</h3>
+                <p>가상의 시장 상황에서 최적의 투자 결정을 내려보세요. 다양한 시나리오를 통해 투자 감각을 키울 수 있습니다.</p>
+                <div class="game-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="simScore">0%</div>
+                        <div class="stat-label">최고 수익률</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="simPlayed">0</div>
+                        <div class="stat-label">플레이 횟수</div>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="startSimulation()">시뮬레이션 시작</button>
+            </div>
+
+            <!-- 금융 용어 매칭 -->
+            <div class="game-card">
+                <div class="game-icon">🎯</div>
+                <h3>금융 용어 매칭</h3>
+                <p>금융 용어와 그 정의를 빠르게 매칭하는 게임입니다. 시간 안에 많은 문제를 맞춰보세요.</p>
+                <div class="game-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="matchScore">0</div>
+                        <div class="stat-label">최고 점수</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="matchTime">0s</div>
+                        <div class="stat-label">최단 시간</div>
+                    </div>
+                </div>
+                <button class="btn btn-warning" onclick="startMatching()">매칭 게임 시작</button>
+            </div>
+
+            <!-- 리더보드 -->
+            <div class="game-card">
+                <div class="game-icon">🏆</div>
+                <h3>리더보드</h3>
+                <p>다른 사용자들과 점수를 비교하고 순위를 확인해보세요.</p>
+                <div class="leaderboard">
+                    <div class="leaderboard-item">
+                        <div class="rank">1위</div>
+                        <div class="player-info">
+                            <div class="player-name">김투자</div>
+                            <div class="player-level">BLACK 레벨</div>
+                        </div>
+                        <div class="score">1,250점</div>
+                    </div>
+                    <div class="leaderboard-item">
+                        <div class="rank">2위</div>
+                        <div class="player-info">
+                            <div class="player-name">박금융</div>
+                            <div class="player-level">BROWN 레벨</div>
+                        </div>
+                        <div class="score">1,180점</div>
+                    </div>
+                    <div class="leaderboard-item">
+                        <div class="rank">3위</div>
+                        <div class="player-info">
+                            <div class="player-name">이경제</div>
+                            <div class="player-level">BLUE 레벨</div>
+                        </div>
+                        <div class="score">1,050점</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div id="quizModal" class="modal">
+        <div class="modal-content">
+            <h3>금융 지식 퀴즈</h3>
+            <div class="question" id="quizQuestion">문제를 불러오는 중...</div>
+            <div class="options" id="quizOptions">
+                <!-- Options will be inserted here -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn-modal" style="background: #667eea; color: white;" onclick="submitAnswer()">답변 제출</button>
+                <button class="btn-modal" style="background: #95a5a6; color: white;" onclick="closeQuizModal()">종료</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Quiz data
+        const QUIZ_QUESTIONS = [
+            {
+                question: "PER이란 무엇의 줄임말인가요?",
+                options: ["Price Earnings Ratio", "Personal Economic Report", "Private Equity Ratio", "Public Exchange Rate"],
+                correct: 0,
+                explanation: "PER은 Price Earnings Ratio의 줄임말로, 주가수익비율을 의미합니다."
+            },
+            {
+                question: "분산투자의 주된 목적은 무엇인가요?",
+                options: ["수익률 극대화", "리스크 분산", "거래비용 절약", "세금 절약"],
+                correct: 1,
+                explanation: "분산투자는 여러 자산에 투자하여 리스크를 분산시키는 것이 주된 목적입니다."
+            },
+            {
+                question: "복리의 특징으로 옳은 것은?",
+                options: ["이자가 일정하다", "원금만 증가한다", "이자에 이자가 붙는다", "단기투자에 유리하다"],
+                correct: 2,
+                explanation: "복리는 원금과 이자를 합한 금액에 다시 이자가 계산되는 방식입니다."
+            },
+            {
+                question: "ETF의 특징으로 맞는 것은?",
+                options: ["은행에서만 거래", "높은 최소투자금액", "실시간 거래 가능", "원금 보장"],
+                correct: 2,
+                explanation: "ETF는 거래소에서 실시간으로 거래가 가능한 펀드입니다."
+            },
+            {
+                question: "인플레이션이 발생하면 화폐의 가치는?",
+                options: ["상승한다", "하락한다", "변하지 않는다", "예측할 수 없다"],
+                correct: 1,
+                explanation: "인플레이션이 발생하면 물가가 상승하여 화폐의 실질 가치는 하락합니다."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let selectedOption = -1;
+        let quizScore = 0;
+        let correctAnswers = 0;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+            loadGameStats();
+        });
+
+        function initializePage() {
+            // Load user interface if FinLearnUtils is available
+            if (window.FinLearnUtils) {
+                updateUserInterface();
+            }
+        }
+
+        function updateUserInterface() {
+            const currentUser = getCurrentUser();
+            if (currentUser && currentUser.isLoggedIn) {
+                // Update profile image
+                if (currentUser.profileImage) {
+                    document.getElementById('navProfileImg').src = currentUser.profileImage;
+                }
+                
+                // Update level badge
+                const level = getLevelFromExp(currentUser.exp);
+                updateLevelBadges(level);
+            }
+        }
+
+        function getCurrentUser() {
+            const userData = localStorage.getItem('currentUser');
+            return userData ? JSON.parse(userData) : null;
+        }
+
+        function getLevelFromExp(exp) {
+            const levels = ['yellow', 'orange', 'green', 'blue', 'brown', 'black', 'red'];
+            const thresholds = [0, 3000, 6000, 10000, 15000, 25000, 50000];
+            
+            for (let i = levels.length - 1; i >= 0; i--) {
+                if (exp >= thresholds[i]) {
+                    return levels[i];
+                }
+            }
+            return 'yellow';
+        }
+
+        function updateLevelBadges(level) {
+            const levelNames = {
+                yellow: 'YELLOW',
+                orange: 'ORANGE', 
+                green: 'GREEN',
+                blue: 'BLUE',
+                brown: 'BROWN',
+                black: 'BLACK',
+                red: 'RED'
+            };
+            
+            const badge = document.getElementById('navLevelBadge');
+            if (badge) {
+                badge.textContent = levelNames[level];
+                badge.className = `level-badge glow level-${level}`;
+            }
+        }
+
+        function loadGameStats() {
+            // Load game statistics from localStorage
+            const stats = JSON.parse(localStorage.getItem('gameStats') || '{}');
+            
+            document.getElementById('quizScore').textContent = stats.quizHighScore || 0;
+            document.getElementById('quizPlayed').textContent = stats.quizPlayed || 0;
+            document.getElementById('simScore').textContent = (stats.simHighReturn || 0) + '%';
+            document.getElementById('simPlayed').textContent = stats.simPlayed || 0;
+            document.getElementById('matchScore').textContent = stats.matchHighScore || 0;
+            document.getElementById('matchTime').textContent = (stats.matchBestTime || 0) + 's';
+        }
+
+        function saveGameStats(gameType, score, additionalData = {}) {
+            const stats = JSON.parse(localStorage.getItem('gameStats') || '{}');
+            
+            if (gameType === 'quiz') {
+                stats.quizHighScore = Math.max(stats.quizHighScore || 0, score);
+                stats.quizPlayed = (stats.quizPlayed || 0) + 1;
+            } else if (gameType === 'simulation') {
+                stats.simHighReturn = Math.max(stats.simHighReturn || 0, score);
+                stats.simPlayed = (stats.simPlayed || 0) + 1;
+            } else if (gameType === 'matching') {
+                stats.matchHighScore = Math.max(stats.matchHighScore || 0, score);
+                if (additionalData.time) {
+                    stats.matchBestTime = Math.min(stats.matchBestTime || Infinity, additionalData.time);
+                }
+            }
+            
+            localStorage.setItem('gameStats', JSON.stringify(stats));
+            loadGameStats();
+        }
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            selectedOption = -1;
+            quizScore = 0;
+            correctAnswers = 0;
+            
+            document.getElementById('quizModal').style.display = 'block';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= QUIZ_QUESTIONS.length) {
+                finishQuiz();
+                return;
+            }
+            
+            const question = QUIZ_QUESTIONS[currentQuestionIndex];
+            document.getElementById('quizQuestion').textContent = 
+                `문제 ${currentQuestionIndex + 1}/${QUIZ_QUESTIONS.length}: ${question.question}`;
+            
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectOption(index);
+                optionsContainer.appendChild(optionDiv);
+            });
+            
+            selectedOption = -1;
+        }
+
+        function selectOption(index) {
+            // Clear previous selections
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select current option
+            document.querySelectorAll('.option')[index].classList.add('selected');
+            selectedOption = index;
+        }
+
+        function submitAnswer() {
+            if (selectedOption === -1) {
+                alert('답을 선택해주세요.');
+                return;
+            }
+            
+            const question = QUIZ_QUESTIONS[currentQuestionIndex];
+            const isCorrect = selectedOption === question.correct;
+            
+            // Show correct/incorrect answers
+            document.querySelectorAll('.option').forEach((option, index) => {
+                if (index === question.correct) {
+                    option.classList.add('correct');
+                } else if (index === selectedOption && !isCorrect) {
+                    option.classList.add('incorrect');
+                }
+            });
+            
+            if (isCorrect) {
+                correctAnswers++;
+                quizScore += 100;
+                
+                // Add EXP for correct answer
+                if (window.FinLearnUtils) {
+                    window.FinLearnUtils.addExp(50);
+                }
+            }
+            
+            // Show explanation
+            setTimeout(() => {
+                alert(question.explanation);
+                currentQuestionIndex++;
+                loadQuestion();
+            }, 2000);
+        }
+
+        function finishQuiz() {
+            const percentage = Math.round((correctAnswers / QUIZ_QUESTIONS.length) * 100);
+            saveGameStats('quiz', quizScore);
+            
+            alert(`퀴즈 완료!\n정답률: ${percentage}%\n획득 점수: ${quizScore}점`);
+            closeQuizModal();
+        }
+
+        function closeQuizModal() {
+            document.getElementById('quizModal').style.display = 'none';
+        }
+
+        function startSimulation() {
+            // Simplified simulation - in real app would be more complex
+            const scenarios = [
+                { name: "주식 시장 급락", return: -15 },
+                { name: "경제 호황", return: 25 },
+                { name: "금리 인상", return: -5 },
+                { name: "신기술 투자", return: 40 },
+                { name: "안정적 성장", return: 8 }
+            ];
+            
+            const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+            const userReturn = Math.random() * 50 - 15; // -15% to 35%
+            
+            saveGameStats('simulation', userReturn);
+            
+            if (window.FinLearnUtils) {
+                window.FinLearnUtils.addExp(Math.max(10, Math.floor(userReturn * 2)));
+            }
+            
+            alert(`시뮬레이션 결과\n시나리오: ${randomScenario.name}\n당신의 수익률: ${userReturn.toFixed(2)}%`);
+        }
+
+        function startMatching() {
+            // Simplified matching game
+            const terms = [
+                { term: "PER", definition: "주가수익비율" },
+                { term: "ROE", definition: "자기자본이익률" },
+                { term: "ETF", definition: "상장지수펀드" },
+                { term: "분산투자", definition: "리스크 분산 전략" }
+            ];
+            
+            const startTime = Date.now();
+            const score = Math.floor(Math.random() * 500) + 100;
+            const endTime = Date.now();
+            const time = Math.floor((endTime - startTime) / 1000) + Math.floor(Math.random() * 30) + 10;
+            
+            saveGameStats('matching', score, { time });
+            
+            if (window.FinLearnUtils) {
+                window.FinLearnUtils.addExp(score / 10);
+            }
+            
+            alert(`매칭 게임 완료!\n점수: ${score}점\n소요 시간: ${time}초`);
+        }
+    </script>
+</body>
+</html>

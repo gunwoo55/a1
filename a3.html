@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>더보기 - FinLearn</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Navigation */
+        .nav {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .nav-links a.active {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .nav-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #667eea;
+        }
+
+        .level-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+            animation: glowPulse 2s infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { 
+                box-shadow: 0 0 5px currentColor;
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+                transform: scale(1.05);
+            }
+        }
+
+        .glow {
+            animation: glowPulse 2s infinite;
+        }
+
+        .level-yellow { background: #f39c12; }
+        .level-orange { background: #e67e22; }
+        .level-green { background: #27ae60; }
+        .level-blue { background: #3498db; }
+        .level-brown { background: #8b4513; }
+        .level-black { background: #2c3e50; }
+        .level-red { background: #e74c3c; }
+
+        /* Page Header */
+        .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .page-header h1 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .content-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            transition: transform 0.3s;
+        }
+
+        .content-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .content-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .content-card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.5rem 0;
+            color: #666;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            color: #27ae60;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            margin-bottom: 2rem;
+        }
+
+        .info-section h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .contact-icon {
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-brand">💰 FinLearn</div>
+            <ul class="nav-links">
+                <li><a href="index.html">홈</a></li>
+                <li><a href="a1.html">투자</a></li>
+                <li><a href="a2.html">뉴스</a></li>
+                <li><a href="a3.html" class="active">더보기</a></li>
+                <li><a href="a4.html">게임</a></li>
+                <li><a href="a5.html">등급</a></li>
+            </ul>
+            <div class="nav-profile">
+                <img id="navProfileImg" class="profile-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23667eea'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='16'%3E👤%3C/text%3E%3C/svg%3E" alt="프로필">
+                <span id="navLevelBadge" class="level-badge glow level-yellow">YELLOW</span>
+            </div>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>📚 더보기</h1>
+            <p>추가 기능과 정보를 확인해보세요</p>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
+            <!-- 학습 자료 -->
+            <div class="content-card">
+                <h3>📖 학습 자료</h3>
+                <p>금융 지식을 체계적으로 학습할 수 있는 다양한 자료들을 제공합니다.</p>
+                <ul class="feature-list">
+                    <li>기초 투자 가이드</li>
+                    <li>금융 용어 사전</li>
+                    <li>투자 전략 분석</li>
+                    <li>시장 분석 리포트</li>
+                </ul>
+                <a href="#" class="btn">학습하기</a>
+            </div>
+
+            <!-- 커뮤니티 -->
+            <div class="content-card">
+                <h3>👥 커뮤니티</h3>
+                <p>다른 사용자들과 투자 경험과 정보를 공유하고 토론해보세요.</p>
+                <ul class="feature-list">
+                    <li>투자 토론 게시판</li>
+                    <li>질문과 답변</li>
+                    <li>투자 경험 공유</li>
+                    <li>전문가 칼럼</li>
+                </ul>
+                <a href="#" class="btn">참여하기</a>
+            </div>
+
+            <!-- 도구 및 계산기 -->
+            <div class="content-card">
+                <h3>🧮 금융 계산기</h3>
+                <p>다양한 금융 계산기를 활용하여 투자 계획을 세워보세요.</p>
+                <ul class="feature-list">
+                    <li>복리 계산기</li>
+                    <li>대출 계산기</li>
+                    <li>은퇴 계획 계산기</li>
+                    <li>투자 수익률 계산기</li>
+                </ul>
+                <a href="#" class="btn">계산하기</a>
+            </div>
+
+            <!-- 설정 -->
+            <div class="content-card">
+                <h3>⚙️ 설정</h3>
+                <p>개인화된 서비스를 위한 설정을 관리하세요.</p>
+                <ul class="feature-list">
+                    <li>알림 설정</li>
+                    <li>프로필 관리</li>
+                    <li>개인정보 보호</li>
+                    <li>계정 설정</li>
+                </ul>
+                <a href="#" class="btn">설정하기</a>
+            </div>
+
+            <!-- 고객 지원 -->
+            <div class="content-card">
+                <h3>🎧 고객 지원</h3>
+                <p>궁금한 점이 있으시면 언제든지 문의해주세요.</p>
+                <ul class="feature-list">
+                    <li>자주 묻는 질문</li>
+                    <li>1:1 문의</li>
+                    <li>사용자 가이드</li>
+                    <li>버그 신고</li>
+                </ul>
+                <a href="#" class="btn">문의하기</a>
+            </div>
+
+            <!-- 업데이트 정보 -->
+            <div class="content-card">
+                <h3>🔄 업데이트 정보</h3>
+                <p>최신 업데이트 내용과 새로운 기능들을 확인해보세요.</p>
+                <ul class="feature-list">
+                    <li>최신 기능 소개</li>
+                    <li>개선 사항</li>
+                    <li>버그 수정</li>
+                    <li>업데이트 로그</li>
+                </ul>
+                <a href="#" class="btn">확인하기</a>
+            </div>
+        </div>
+
+        <!-- 앱 정보 -->
+        <div class="info-section">
+            <h3>📱 FinLearn 앱 정보</h3>
+            <p>FinLearn은 금융 교육과 모의 투자를 통해 실전 투자 능력을 기를 수 있는 플랫폼입니다. 
+               안전한 가상 환경에서 다양한 투자 상품을 체험하고, 금융 지식을 쌓아가세요.</p>
+            
+            <div class="contact-info">
+                <div class="contact-item">
+                    <span class="contact-icon">📧</span>
+                    <span>support@finlearn.co.kr</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">📞</span>
+                    <span>1588-1234</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">🌐</span>
+                    <span>www.finlearn.co.kr</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">📍</span>
+                    <span>서울시 강남구 테헤란로 123</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+        });
+
+        function initializePage() {
+            // Load user interface if FinLearnUtils is available
+            if (window.FinLearnUtils) {
+                updateUserInterface();
+            }
+        }
+
+        function updateUserInterface() {
+            const currentUser = getCurrentUser();
+            if (currentUser && currentUser.isLoggedIn) {
+                // Update profile image
+                if (currentUser.profileImage) {
+                    document.getElementById('navProfileImg').src = currentUser.profileImage;
+                }
+                
+                // Update level badge
+                const level = getLevelFromExp(currentUser.exp);
+                updateLevelBadges(level);
+            }
+        }
+
+        function getCurrentUser() {
+            const userData = localStorage.getItem('currentUser');
+            return userData ? JSON.parse(userData) : null;
+        }
+
+        function getLevelFromExp(exp) {
+            const levels = ['yellow', 'orange', 'green', 'blue', 'brown', 'black', 'red'];
+            const thresholds = [0, 3000, 6000, 10000, 15000, 25000, 50000];
+            
+            for (let i = levels.length - 1; i >= 0; i--) {
+                if (exp >= thresholds[i]) {
+                    return levels[i];
+                }
+            }
+            return 'yellow';
+        }
+
+        function updateLevelBadges(level) {
+            const levelNames = {
+                yellow: 'YELLOW',
+                orange: 'ORANGE', 
+                green: 'GREEN',
+                blue: 'BLUE',
+                brown: 'BROWN',
+                black: 'BLACK',
+                red: 'RED'
+            };
+            
+            const badge = document.getElementById('navLevelBadge');
+            if (badge) {
+                badge.textContent = levelNames[level];
+                badge.className = `level-badge glow level-${level}`;
+            }
+        }
+    </script>
+</body>
+</html>
