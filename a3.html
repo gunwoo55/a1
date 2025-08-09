@@ -28,14 +28,6 @@
         .card-shadow {
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-        .btn-primary {
-            background: linear-gradient(135deg, #4A6FA5, #6B8DC7);
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
-        }
         
         .level-badge-nav {
             width: 56px;
@@ -54,6 +46,7 @@
             transform: translateX(-50%);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 10;
+            cursor: pointer;
             border: 2px solid rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
         }
@@ -77,6 +70,12 @@
         }
         
         .level-yellow { background: linear-gradient(135deg, #FCD34D, #F59E0B); }
+        .level-orange { background: linear-gradient(135deg, #FB923C, #EA580C); }
+        .level-green { background: linear-gradient(135deg, #34D399, #059669); }
+        .level-blue { background: linear-gradient(135deg, #60A5FA, #2563EB); }
+        .level-brown { background: linear-gradient(135deg, #A16207, #92400E); }
+        .level-black { background: linear-gradient(135deg, #374151, #111827); }
+        .level-red { background: linear-gradient(135deg, #EF4444, #DC2626); }
         
         .bottom-navigation {
             position: fixed;
@@ -232,7 +231,7 @@
     <div class="min-h-screen bg-gray-100">
         <div class="bg-white shadow-sm p-4">
             <div class="flex items-center justify-between max-w-md mx-auto">
-                <button onclick="goToHome()" class="text-gray-600">
+                <button onclick="navigateToPage('index.html')" class="text-gray-600">
                     <i class="fas fa-arrow-left text-xl"></i>
                 </button>
                 <h1 class="text-xl font-bold">더보기</h1>
@@ -300,24 +299,24 @@
         <!-- 하단 네비게이션 -->
         <div class="bottom-navigation">
             <div class="nav-container">
-                <button onclick="goToHome()" class="nav-item">
+                <button onclick="navigateToPage('index.html')" class="nav-item">
                     <i class="fas fa-home text-gray-400"></i>
                     <span class="text-gray-400">홈</span>
                 </button>
-                <button onclick="goToNews()" class="nav-item">
+                <button onclick="navigateToPage('a2.html')" class="nav-item">
                     <i class="fas fa-newspaper text-gray-400"></i>
                     <span class="text-gray-400">뉴스</span>
                 </button>
                 <div class="nav-center">
-                    <div id="navLevelBadge" class="level-badge-nav level-yellow" onclick="goToGrade()">
+                    <div id="navLevelBadge" class="level-badge-nav level-yellow" onclick="navigateToPage('a5.html')">
                         YELLOW
                     </div>
                 </div>
-                <button onclick="goToGame()" class="nav-item">
+                <button onclick="navigateToPage('a4.html')" class="nav-item">
                     <i class="fas fa-gamepad text-gray-400"></i>
                     <span class="text-gray-400">게임</span>
                 </button>
-                <button onclick="goToMore()" class="nav-item active">
+                <button onclick="navigateToPage('a3.html')" class="nav-item active">
                     <i class="fas fa-ellipsis-h"></i>
                     <span>더보기</span>
                 </button>
@@ -443,25 +442,47 @@
 </div>
 
 <script>
-var currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+var currentUser = null;
 
-// 레벨 시스템 (스타일 클래스만 필요)
 var levelSystem = {
-    yellow: { class: 'level-yellow' },
-    orange: { class: 'level-orange' },
-    green: { class: 'level-green' },
-    blue: { class: 'level-blue' },
-    brown: { class: 'level-brown' },
-    black: { class: 'level-black' },
-    red: { class: 'level-red' }
+    yellow: { name: 'YELLOW', class: 'level-yellow' },
+    orange: { name: 'ORANGE', class: 'level-orange' },
+    green: { name: 'GREEN', class: 'level-green' },
+    blue: { name: 'BLUE', class: 'level-blue' },
+    brown: { name: 'BROWN', class: 'level-brown' },
+    black: { name: 'BLACK', class: 'level-black' },
+    red: { name: 'RED', class: 'level-red' }
 };
 
-// 페이지 이동 함수들
-function goToHome() { window.location.href = 'index.html?v=' + Date.now(); }
-function goToNews() { window.location.href = 'a2.html?v=' + Date.now(); }
-function goToGrade() { window.location.href = 'a5.html?v=' + Date.now(); }
-function goToGame() { window.location.href = 'a4.html?v=' + Date.now(); }
-function goToMore() { /* 현재 페이지 */ }
+// --- 데이터 연동 로직 ---
+function loadUserData() {
+    try {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+        } else {
+            window.location.href = 'index.html';
+        }
+    } catch (error) {
+        console.error("데이터 로드 오류:", error);
+        window.location.href = 'index.html';
+    }
+}
+
+function saveUserData() {
+    if (currentUser) {
+        try {
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        } catch (error) {
+            console.error("데이터 저장 오류:", error);
+        }
+    }
+}
+
+function navigateToPage(page) {
+    saveUserData();
+    window.location.href = page + '?v=' + new Date().getTime();
+}
 
 // 모달 관련 함수들
 function openFSSModal() { document.getElementById('fssModal').classList.add('show'); }
@@ -485,17 +506,18 @@ document.addEventListener('click', function(e) {
 
 // 페이지 로드시 초기화
 document.addEventListener('DOMContentLoaded', function() {
-    if (currentUser) {
-        var levelBadge = document.getElementById('navLevelBadge');
-        var userLevel = currentUser.level || 'yellow';
-        if (levelBadge && levelSystem[userLevel]) {
-            levelBadge.className = 'level-badge-nav ' + levelSystem[userLevel].class;
-            levelBadge.textContent = userLevel.toUpperCase();
-        }
+    loadUserData();
+    if (!currentUser) return;
+
+    var levelBadge = document.getElementById('navLevelBadge');
+    var userLevel = currentUser.level || 'yellow';
+    if (levelBadge && levelSystem[userLevel]) {
+        levelBadge.className = 'level-badge-nav ' + levelSystem[userLevel].class;
+        levelBadge.textContent = levelSystem[userLevel].name;
     }
-    
-    console.log('더보기 페이지 로드 완료');
 });
+
+window.addEventListener('beforeunload', saveUserData);
 </script>
 
 </body>
