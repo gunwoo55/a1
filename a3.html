@@ -54,24 +54,29 @@
             transform: translateX(-50%);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 10;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .level-badge-nav::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            animation: glowing-border 3s infinite linear;
+        }
+        
+        @keyframes glowing-border {
+            0% { border-color: rgba(255, 255, 255, 0.2); transform: scale(1); }
+            50% { border-color: rgba(255, 255, 255, 0.8); transform: scale(1.05); }
+            100% { border-color: rgba(255, 255, 255, 0.2); transform: scale(1); }
         }
         
         .level-yellow { background: linear-gradient(135deg, #FCD34D, #F59E0B); }
-        .level-orange { background: linear-gradient(135deg, #FB923C, #EA580C); }
-        .level-green { background: linear-gradient(135deg, #34D399, #059669); }
-        .level-blue { background: linear-gradient(135deg, #60A5FA, #2563EB); }
-        .level-brown { background: linear-gradient(135deg, #A16207, #92400E); }
-        .level-black { background: linear-gradient(135deg, #374151, #111827); }
-        .level-red { background: linear-gradient(135deg, #EF4444, #DC2626); }
-
-        .level-badge-glowing {
-            animation: glowing 2s infinite;
-        }
-        @keyframes glowing {
-            0% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(255, 255, 255, 0.5); }
-            50% { box-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 30px rgba(255, 255, 255, 1); }
-            100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(255, 255, 255, 0.5); }
-        }
         
         .bottom-navigation {
             position: fixed;
@@ -304,7 +309,7 @@
                     <span class="text-gray-400">뉴스</span>
                 </button>
                 <div class="nav-center">
-                    <div id="navLevelBadge" onclick="goToGrade()" class="level-badge-nav level-yellow">
+                    <div id="navLevelBadge" class="level-badge-nav level-yellow" onclick="goToGrade()">
                         YELLOW
                     </div>
                 </div>
@@ -440,6 +445,17 @@
 <script>
 var currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
 
+// 레벨 시스템 (스타일 클래스만 필요)
+var levelSystem = {
+    yellow: { class: 'level-yellow' },
+    orange: { class: 'level-orange' },
+    green: { class: 'level-green' },
+    blue: { class: 'level-blue' },
+    brown: { class: 'level-brown' },
+    black: { class: 'level-black' },
+    red: { class: 'level-red' }
+};
+
 // 페이지 이동 함수들
 function goToHome() { window.location.href = 'index.html?v=' + Date.now(); }
 function goToNews() { window.location.href = 'a2.html?v=' + Date.now(); }
@@ -469,21 +485,13 @@ document.addEventListener('click', function(e) {
 
 // 페이지 로드시 초기화
 document.addEventListener('DOMContentLoaded', function() {
-    if (currentUser && currentUser.level) {
-        const levelBadge = document.getElementById('navLevelBadge');
-        const levelInfo = {
-            yellow: { name: 'YELLOW', class: 'level-yellow' },
-            orange: { name: 'ORANGE', class: 'level-orange' },
-            green: { name: 'GREEN', class: 'level-green' },
-            blue: { name: 'BLUE', class: 'level-blue' },
-            brown: { name: 'BROWN', class: 'level-brown' },
-            black: { name: 'BLACK', class: 'level-black' },
-            red: { name: 'RED', class: 'level-red' }
-        };
-        const currentLevel = levelInfo[currentUser.level] || levelInfo.yellow;
-        levelBadge.textContent = currentLevel.name;
-        levelBadge.className = 'level-badge-nav ' + currentLevel.class;
-        if(currentUser.level === 'black') levelBadge.classList.add('level-badge-glowing');
+    if (currentUser) {
+        var levelBadge = document.getElementById('navLevelBadge');
+        var userLevel = currentUser.level || 'yellow';
+        if (levelBadge && levelSystem[userLevel]) {
+            levelBadge.className = 'level-badge-nav ' + levelSystem[userLevel].class;
+            levelBadge.textContent = userLevel.toUpperCase();
+        }
     }
     
     console.log('더보기 페이지 로드 완료');
