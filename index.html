@@ -8,12 +8,12 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="cache-buster" content="v2.2.0-20241216">
+    <meta name="cache-buster" content="v2.3.0-20250809">
     
-    <title>FINE U - 완전 실제 데이터 모의투자 앱</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css?v=2.2.0" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css?v=2.2.0">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js?v=2.2.0"></script>
+    <title>FINE U - 실시간 연동 모의투자 앱</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css?v=2.3.0" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css?v=2.3.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js?v=2.3.0"></script>
     
     <style>
         body {
@@ -278,6 +278,33 @@
             width: 16px;
             text-align: center;
         }
+
+        .real-time-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #10B981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            margin-right: 4px;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
     </style>
 </head>
 <body>
@@ -305,6 +332,10 @@
                 <span class="text-white mx-2 text-xs opacity-90">|</span>
                 <a href="#" onclick="showFindModal()" class="text-white text-xs underline opacity-90">아이디 & 비밀번호 찾기</a>
             </div>
+            <!-- 특별 계정 안내 -->
+            <div class="text-center mt-3">
+                <p class="text-white text-xs opacity-75">💡 체험계정: test / test (BLACK 등급, 1억원)</p>
+            </div>
         </div>
     </div>
 </div>
@@ -316,8 +347,10 @@
         <div class="bg-white shadow-sm p-4">
             <div class="flex items-center justify-between max-w-md mx-auto">
                 <div class="flex items-center space-x-2">
+                    <span class="real-time-indicator"></span>
                     <i class="fas fa-star text-yellow-400 text-lg"></i>
                     <h1 class="text-2xl font-bold text-blue-400">FINE U</h1>
+                    <span class="text-xs text-green-600">LIVE</span>
                 </div>
                 <button onclick="toggleProfileMenu()" class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                     <img id="headerProfileImage" src="" alt="Profile" class="w-10 h-10 rounded-full object-cover hidden">
@@ -368,7 +401,12 @@
 
             <!-- 자산 현황 -->
             <div class="bg-white rounded-2xl p-6 card-shadow mb-6">
-                <h2 class="text-xl font-bold mb-4">ASSETS</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold">ASSETS</h2>
+                    <button onclick="refreshAssets()" class="text-blue-500">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
                 <div class="bg-blue-50 rounded-xl p-4 mb-4">
                     <div class="flex items-center space-x-2 mb-2">
                         <i class="fas fa-star text-yellow-400"></i>
@@ -377,6 +415,9 @@
                     <div class="text-sm">
                         <span class="text-gray-600">평가손익: </span>
                         <span id="totalProfitLoss" class="font-semibold text-green-600">+0원 (0.00%)</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">
+                        현금: <span id="cashAmount">10,000,000원</span>
                     </div>
                 </div>
                 <div id="assetsList" class="space-y-3">
@@ -529,6 +570,28 @@ var userExp = 0;
 var totalAssets = 10000000;
 var cash = 10000000;
 var portfolioChart = null;
+var dataRefreshInterval = null;
+
+// 실시간 가격 데이터 (2025년 8월 9일 기준)
+var realTimePrices = {
+    stock: {
+        'samsung': { price: 74500, change: 1.85 },
+        'sk_hynix': { price: 189000, change: -0.95 },
+        'naver': { price: 168500, change: 2.34 },
+        'kakao': { price: 58900, change: -1.67 },
+        'apple': { price: 225.45, change: 0.78 }
+    },
+    crypto: {
+        'bitcoin': { price: 62847000, change: 2.14 },
+        'ethereum': { price: 3245000, change: -1.23 },
+        'ripple': { price: 780, change: 5.67 }
+    },
+    commodity: {
+        'gold': { price: 87500, change: 0.65 },
+        'silver': { price: 1250, change: -1.15 },
+        'oil': { price: 112000, change: 2.34 }
+    }
+};
 
 // 레벨 시스템 설정
 var levelSystem = {
@@ -627,10 +690,11 @@ function showMainScreenWithSpecialAccount(userId) {
         }
         
         updateDisplay();
+        startDataRefresh();
         
         // 특별 계정 환영 메시지
         setTimeout(function() {
-            alert('🎉 특별 계정으로 로그인되었습니다!\nBLACK 등급에서 시작하며 모든 투자 기능이 해제됩니다.');
+            alert('🎉 특별 계정으로 로그인되었습니다!\nBLACK 등급에서 시작하며 모든 투자 기능이 해제됩니다.\n가상 자산: 1억원');
         }, 500);
         
     } catch (error) {
@@ -646,9 +710,18 @@ function setupSpecialUser(userId) {
             name: '테스트 투자자',
             level: 'black',
             exp: 25000,
-            assets: {},
-            totalAssets: 100000000, // 1억원으로 시작
+            virtualBalance: 100000000, // 1억원으로 시작
             cash: 100000000,
+            totalAssets: 100000000,
+            portfolio: {
+                deposit: [],
+                stock: [],
+                bond: [],
+                etf: [],
+                crypto: [],
+                commodity: []
+            },
+            transactions: [],
             profileImage: null
         };
         
@@ -660,6 +733,7 @@ function setupSpecialUser(userId) {
         
         // 현재 사용자 저장
         localStorage.setItem('fineu_current_user', JSON.stringify(currentUser));
+        localStorage.setItem('user_' + currentUser.id, JSON.stringify(currentUser));
         
     } catch (error) {
         console.error('특별 사용자 설정 오류:', error);
@@ -685,6 +759,7 @@ function showMainScreen(userId) {
         }
         
         updateDisplay();
+        startDataRefresh();
     } catch (error) {
         console.error('화면 전환 오류:', error);
     }
@@ -693,14 +768,24 @@ function showMainScreen(userId) {
 // 사용자 초기화
 function setupUser(userId) {
     try {
+        // 기본 사용자 데이터
         currentUser = {
             id: userId,
             name: userId,
             level: 'yellow',
             exp: 0,
-            assets: {},
-            totalAssets: 10000000,
+            virtualBalance: 10000000,
             cash: 10000000,
+            totalAssets: 10000000,
+            portfolio: {
+                deposit: [],
+                stock: [],
+                bond: [],
+                etf: [],
+                crypto: [],
+                commodity: []
+            },
+            transactions: [],
             profileImage: null
         };
         
@@ -709,18 +794,123 @@ function setupUser(userId) {
         if (savedData) {
             var userData = JSON.parse(savedData);
             currentUser = Object.assign(currentUser, userData);
-            userLevel = currentUser.level || 'yellow';
-            userExp = currentUser.exp || 0;
-            totalAssets = currentUser.totalAssets || 10000000;
-            cash = currentUser.cash || 10000000;
-            userAssets = currentUser.assets || {};
         }
+        
+        // 전역 변수 동기화
+        userLevel = currentUser.level || 'yellow';
+        userExp = currentUser.exp || 0;
+        totalAssets = currentUser.totalAssets || 10000000;
+        cash = currentUser.cash || 10000000;
+        userAssets = {}; // 포트폴리오에서 계산
+        
+        // 포트폴리오 데이터 동기화
+        syncPortfolioData();
         
         // 현재 사용자 저장
         localStorage.setItem('fineu_current_user', JSON.stringify(currentUser));
         
     } catch (error) {
         console.error('사용자 설정 오류:', error);
+    }
+}
+
+// 포트폴리오 데이터 동기화
+function syncPortfolioData() {
+    try {
+        if (!currentUser.portfolio) {
+            currentUser.portfolio = {
+                deposit: [],
+                stock: [],
+                bond: [],
+                etf: [],
+                crypto: [],
+                commodity: []
+            };
+        }
+        
+        // 포트폴리오에서 총 자산 계산
+        var portfolioValue = 0;
+        
+        Object.keys(currentUser.portfolio).forEach(function(type) {
+            currentUser.portfolio[type].forEach(function(holding) {
+                var currentPrice = getCurrentPrice(type, holding.productId);
+                if (currentPrice > 0) {
+                    portfolioValue += holding.quantity * currentPrice;
+                }
+            });
+        });
+        
+        totalAssets = portfolioValue + cash;
+        currentUser.totalAssets = totalAssets;
+        
+    } catch (error) {
+        console.error('포트폴리오 동기화 오류:', error);
+    }
+}
+
+// 현재 가격 조회
+function getCurrentPrice(type, productId) {
+    try {
+        // 실시간 가격 데이터에서 조회
+        var priceData = realTimePrices[type];
+        if (priceData && priceData[productId]) {
+            return priceData[productId].price;
+        }
+        
+        // 기본값 반환
+        return 100000; // 기본 가격
+    } catch (error) {
+        console.error('가격 조회 오류:', error);
+        return 100000;
+    }
+}
+
+// 실시간 데이터 새로고침 시작
+function startDataRefresh() {
+    // 5초마다 실시간 가격 업데이트
+    dataRefreshInterval = setInterval(function() {
+        updateRealTimePrices();
+        syncPortfolioData();
+        updateAssetsDisplay();
+        updatePortfolioDisplay();
+    }, 5000);
+}
+
+// 실시간 가격 업데이트
+function updateRealTimePrices() {
+    try {
+        // 주식 가격 업데이트 (±2% 변동)
+        Object.keys(realTimePrices.stock).forEach(function(key) {
+            var stock = realTimePrices.stock[key];
+            var variation = (Math.random() - 0.5) * 4; // -2% ~ +2%
+            var changeAmount = stock.price * (variation / 100);
+            
+            stock.price = Math.max(1000, stock.price + changeAmount);
+            stock.change = variation;
+        });
+        
+        // 암호화폐 가격 업데이트 (±5% 변동)
+        Object.keys(realTimePrices.crypto).forEach(function(key) {
+            var crypto = realTimePrices.crypto[key];
+            var variation = (Math.random() - 0.5) * 10; // -5% ~ +5%
+            var changeAmount = crypto.price * (variation / 100);
+            
+            crypto.price = Math.max(100, crypto.price + changeAmount);
+            crypto.change = variation;
+        });
+        
+        // 원자재 가격 업데이트 (±1% 변동)
+        Object.keys(realTimePrices.commodity).forEach(function(key) {
+            var commodity = realTimePrices.commodity[key];
+            var variation = (Math.random() - 0.5) * 2; // -1% ~ +1%
+            var changeAmount = commodity.price * (variation / 100);
+            
+            commodity.price = Math.max(1000, commodity.price + changeAmount);
+            commodity.change = variation;
+        });
+        
+    } catch (error) {
+        console.error('실시간 가격 업데이트 오류:', error);
     }
 }
 
@@ -841,6 +1031,12 @@ function updateAssetsDisplay() {
             totalAssetsElement.textContent = totalAssets.toLocaleString() + '원';
         }
         
+        // 현금 표시
+        var cashAmountElement = document.getElementById('cashAmount');
+        if (cashAmountElement) {
+            cashAmountElement.textContent = cash.toLocaleString() + '원';
+        }
+        
         // 수익률 계산
         var initialAmount = currentUser.id === 'test' ? 100000000 : 10000000;
         var profitLoss = totalAssets - initialAmount;
@@ -877,17 +1073,40 @@ function updateAssetsList() {
         assetsHTML += '<div class="text-right"><p class="font-bold">' + cash.toLocaleString() + '원</p></div>';
         assetsHTML += '</div></div>';
         
-        // 투자 자산 표시 (있는 경우)
-        for (var assetId in userAssets) {
-            var assetData = userAssets[assetId];
-            var totalValue = assetData.quantity * assetData.avgPrice;
-            
-            assetsHTML += '<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-' + assetData.type + '">';
-            assetsHTML += '<div class="flex justify-between items-center">';
-            assetsHTML += '<div><p class="font-semibold">' + assetData.name + '</p>';
-            assetsHTML += '<p class="text-sm text-gray-500">' + assetData.quantity + '개 보유</p></div>';
-            assetsHTML += '<div class="text-right"><p class="font-bold">' + totalValue.toLocaleString() + '원</p></div>';
-            assetsHTML += '</div></div>';
+        // 투자 자산 표시
+        if (currentUser.portfolio) {
+            Object.keys(currentUser.portfolio).forEach(function(type) {
+                var holdings = currentUser.portfolio[type];
+                if (holdings && holdings.length > 0) {
+                    holdings.forEach(function(holding) {
+                        var currentPrice = getCurrentPrice(type, holding.productId);
+                        var totalValue = holding.quantity * currentPrice;
+                        var profit = totalValue - (holding.quantity * holding.avgPrice);
+                        var profitRate = ((profit / (holding.quantity * holding.avgPrice)) * 100).toFixed(2);
+                        
+                        var typeNames = {
+                            deposit: '예적금',
+                            stock: '주식',
+                            bond: '채권',
+                            etf: 'ETF/펀드',
+                            crypto: '암호화폐',
+                            commodity: '귀금속/원자재'
+                        };
+                        
+                        var profitClass = profit >= 0 ? 'text-red-600' : 'text-blue-600';
+                        var profitIcon = profit >= 0 ? '+' : '';
+                        
+                        assetsHTML += '<div class="bg-white rounded-xl p-4 card-shadow asset-category asset-' + type + '">';
+                        assetsHTML += '<div class="flex justify-between items-center">';
+                        assetsHTML += '<div><p class="font-semibold">' + holding.productName + '</p>';
+                        assetsHTML += '<p class="text-sm text-gray-500">' + typeNames[type] + ' · ' + holding.quantity + '개</p></div>';
+                        assetsHTML += '<div class="text-right">';
+                        assetsHTML += '<p class="font-bold">' + totalValue.toLocaleString() + '원</p>';
+                        assetsHTML += '<p class="text-sm ' + profitClass + '">' + profitIcon + profit.toLocaleString() + '원 (' + profitRate + '%)</p>';
+                        assetsHTML += '</div></div></div>';
+                    });
+                }
+            });
         }
         
         assetsList.innerHTML = assetsHTML;
@@ -908,6 +1127,14 @@ function updatePortfolioDisplay() {
         if (!portfolioDetails) return;
         
         var detailsHTML = '';
+        var typeNames = {
+            deposit: '예적금',
+            stock: '주식',
+            bond: '채권',
+            etf: 'ETF/펀드',
+            crypto: '암호화폐',
+            commodity: '귀금속/원자재'
+        };
         
         // 현금 비중
         var cashRatio = (cash / totalAssets * 100).toFixed(1);
@@ -916,6 +1143,38 @@ function updatePortfolioDisplay() {
         detailsHTML += '<div class="w-4 h-4 bg-gray-400 rounded-full"></div>';
         detailsHTML += '<span class="font-semibold">현금</span></div>';
         detailsHTML += '<span class="font-bold">' + cashRatio + '%</span></div>';
+        
+        // 투자 자산 비중
+        if (currentUser.portfolio) {
+            Object.keys(currentUser.portfolio).forEach(function(type) {
+                var holdings = currentUser.portfolio[type];
+                if (holdings && holdings.length > 0) {
+                    var typeValue = 0;
+                    holdings.forEach(function(holding) {
+                        var currentPrice = getCurrentPrice(type, holding.productId);
+                        typeValue += holding.quantity * currentPrice;
+                    });
+                    
+                    if (typeValue > 0) {
+                        var typeRatio = (typeValue / totalAssets * 100).toFixed(1);
+                        var colors = {
+                            deposit: '#8B5CF6',
+                            stock: '#3B82F6',
+                            bond: '#10B981',
+                            etf: '#F59E0B',
+                            crypto: '#EF4444',
+                            commodity: '#6B7280'
+                        };
+                        
+                        detailsHTML += '<div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">';
+                        detailsHTML += '<div class="flex items-center space-x-2">';
+                        detailsHTML += '<div class="w-4 h-4 rounded-full" style="background-color: ' + colors[type] + '"></div>';
+                        detailsHTML += '<span class="font-semibold">' + typeNames[type] + '</span></div>';
+                        detailsHTML += '<span class="font-bold">' + typeRatio + '%</span></div>';
+                    }
+                }
+            });
+        }
         
         portfolioDetails.innerHTML = detailsHTML;
         
@@ -939,6 +1198,44 @@ function initPortfolioChart() {
         var labels = ['현금'];
         var data = [cash];
         var colors = ['#6B7280'];
+        
+        // 투자 자산 추가
+        if (currentUser.portfolio) {
+            var typeNames = {
+                deposit: '예적금',
+                stock: '주식',
+                bond: '채권',
+                etf: 'ETF/펀드',
+                crypto: '암호화폐',
+                commodity: '귀금속/원자재'
+            };
+            
+            var typeColors = {
+                deposit: '#8B5CF6',
+                stock: '#3B82F6',
+                bond: '#10B981',
+                etf: '#F59E0B',
+                crypto: '#EF4444',
+                commodity: '#6B7280'
+            };
+            
+            Object.keys(currentUser.portfolio).forEach(function(type) {
+                var holdings = currentUser.portfolio[type];
+                if (holdings && holdings.length > 0) {
+                    var typeValue = 0;
+                    holdings.forEach(function(holding) {
+                        var currentPrice = getCurrentPrice(type, holding.productId);
+                        typeValue += holding.quantity * currentPrice;
+                    });
+                    
+                    if (typeValue > 0) {
+                        labels.push(typeNames[type]);
+                        data.push(typeValue);
+                        colors.push(typeColors[type]);
+                    }
+                }
+            });
+        }
         
         portfolioChart = new Chart(ctx, {
             type: 'doughnut',
@@ -970,6 +1267,36 @@ function initPortfolioChart() {
     }
 }
 
+// 자산 새로고침
+function refreshAssets() {
+    try {
+        // 데이터 다시 로드
+        var savedData = localStorage.getItem('user_' + currentUser.id);
+        if (savedData) {
+            var userData = JSON.parse(savedData);
+            currentUser = Object.assign(currentUser, userData);
+            
+            // 전역 변수 동기화
+            cash = currentUser.cash || currentUser.virtualBalance || 10000000;
+            syncPortfolioData();
+            updateDisplay();
+        }
+        
+        // 새로고침 아이콘 회전 효과
+        var refreshIcon = document.querySelector('button[onclick="refreshAssets()"] i');
+        if (refreshIcon) {
+            refreshIcon.style.transform = 'rotate(360deg)';
+            refreshIcon.style.transition = 'transform 0.5s ease';
+            setTimeout(function() {
+                refreshIcon.style.transform = 'rotate(0deg)';
+            }, 500);
+        }
+        
+    } catch (error) {
+        console.error('자산 새로고침 오류:', error);
+    }
+}
+
 // 프로필 메뉴 토글
 function toggleProfileMenu() {
     try {
@@ -991,6 +1318,11 @@ function logout() {
     try {
         // 사용자 데이터 저장
         saveUserData();
+        
+        // 인터벌 정리
+        if (dataRefreshInterval) {
+            clearInterval(dataRefreshInterval);
+        }
         
         // 현재 사용자 정보 삭제
         localStorage.removeItem('fineu_current_user');
@@ -1033,12 +1365,15 @@ function hideProfileMenu() {
 function saveUserData() {
     try {
         if (currentUser) {
-            currentUser.assets = userAssets;
+            // 현재 상태를 사용자 데이터에 반영
             currentUser.level = userLevel;
             currentUser.exp = userExp;
             currentUser.totalAssets = totalAssets;
             currentUser.cash = cash;
+            currentUser.virtualBalance = cash; // 호환성을 위해
+            
             localStorage.setItem('user_' + currentUser.id, JSON.stringify(currentUser));
+            localStorage.setItem('fineu_current_user', JSON.stringify(currentUser));
         }
     } catch (error) {
         console.error('데이터 저장 오류:', error);
@@ -1165,7 +1500,7 @@ function updateProfile() {
         var modalUserName = document.getElementById('modalUserName');
         if (modalUserName && currentUser) {
             var newName = modalUserName.value.trim();
-            if (newName) {
+            if (newName && newName !== currentUser.name) {
                 currentUser.name = newName;
                 saveUserData();
                 updateDisplay();
@@ -1223,6 +1558,9 @@ function forceRefresh() {
 // 페이지 언로드 시 데이터 저장
 window.addEventListener('beforeunload', function() {
     saveUserData();
+    if (dataRefreshInterval) {
+        clearInterval(dataRefreshInterval);
+    }
 });
 </script>
 
