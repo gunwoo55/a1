@@ -20,6 +20,14 @@
         .card-shadow {
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
+        .btn-primary {
+            background: linear-gradient(135deg, #4A6FA5, #6B8DC7);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 111, 165, 0.3);
+        }
         .level-badge-nav {
             width: 56px;
             height: 56px;
@@ -37,29 +45,8 @@
             transform: translateX(-50%);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 10;
-            cursor: pointer;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.3s ease;
+            animation: glow 2s ease-in-out infinite alternate;
         }
-        
-        .level-badge-nav::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            animation: glowing-border 3s infinite linear;
-        }
-        
-        @keyframes glowing-border {
-            0% { border-color: rgba(255, 255, 255, 0.2); transform: scale(1); }
-            50% { border-color: rgba(255, 255, 255, 0.8); transform: scale(1.05); }
-            100% { border-color: rgba(255, 255, 255, 0.2); transform: scale(1); }
-        }
-
         .level-yellow { background: linear-gradient(135deg, #FCD34D, #F59E0B); }
         .level-orange { background: linear-gradient(135deg, #FB923C, #EA580C); }
         .level-green { background: linear-gradient(135deg, #34D399, #059669); }
@@ -67,6 +54,15 @@
         .level-brown { background: linear-gradient(135deg, #A16207, #92400E); }
         .level-black { background: linear-gradient(135deg, #374151, #111827); }
         .level-red { background: linear-gradient(135deg, #EF4444, #DC2626); }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            to {
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 15px rgba(255,255,255,0.3);
+            }
+        }
 
         .bottom-navigation {
             position: fixed;
@@ -203,7 +199,23 @@
             padding: 24px;
         }
 
-        .term-card {
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #E5E7EB;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3B82F6, #6B8DC7);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .real-news-item {
             background: white;
             border-radius: 12px;
             padding: 16px;
@@ -213,51 +225,35 @@
             transition: all 0.2s ease;
         }
 
-        .term-card:hover {
+        .real-news-item:hover {
             transform: translateX(4px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        .newsletter-item {
-            padding: 16px;
-            border-bottom: 1px solid #E5E7EB;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        .newsletter-item:hover {
-            background-color: #F9FAFB;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .newsletter-item:last-child {
-            border-bottom: none;
+        .news-source {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
         }
 
-        .card-news-item {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .card-news-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-
-        .card-news-image {
-            width: 100%;
-            height: 120px;
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
+        .news-date {
+            font-size: 11px;
+            color: #9ca3af;
         }
     </style>
 </head>
@@ -267,7 +263,7 @@
     <!-- 상단 헤더 -->
     <div class="bg-white shadow-sm p-4">
         <div class="flex items-center justify-between max-w-md mx-auto">
-            <button onclick="navigateToPage('index.html')" class="text-gray-600">
+            <button onclick="location.href='index.html'" class="text-gray-600">
                 <i class="fas fa-arrow-left text-xl"></i>
             </button>
             <h1 class="text-xl font-bold">투자 뉴스</h1>
@@ -286,15 +282,33 @@
             </div>
             <h3 class="text-lg font-bold mb-2">오늘의 금융 용어</h3>
             <p class="text-gray-600 text-sm">매일 새로운 금융 용어를 배워보세요</p>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 75%"></div>
+            </div>
+        </div>
+
+        <!-- 실시간 경제 뉴스 -->
+        <div class="news-card featured" onclick="showRealNews()">
+            <div class="icon">
+                <i class="fas fa-newspaper"></i>
+            </div>
+            <h3 class="text-lg font-bold mb-2">실시간 경제 뉴스</h3>
+            <p class="text-gray-600 text-sm">최신 경제 뉴스를 실시간으로 확인하세요</p>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 90%"></div>
+            </div>
         </div>
 
         <!-- 오늘의 뉴스레터 -->
         <div class="news-card featured" onclick="showTodayNewsletter()">
             <div class="icon">
-                <i class="fas fa-newspaper"></i>
+                <i class="fas fa-envelope"></i>
             </div>
             <h3 class="text-lg font-bold mb-2">오늘의 뉴스레터</h3>
             <p class="text-gray-600 text-sm">오늘의 경제 이슈를 간단히 요약해드려요</p>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 60%"></div>
+            </div>
         </div>
 
         <!-- 금융 용어 공부하기 -->
@@ -304,6 +318,9 @@
             </div>
             <h3 class="text-lg font-bold mb-2">금융 용어 공부하기</h3>
             <p class="text-gray-600 text-sm">투자에 필요한 금융 용어를 체계적으로 학습</p>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 40%"></div>
+            </div>
         </div>
 
         <!-- 주간 뉴스레터 -->
@@ -313,6 +330,9 @@
             </div>
             <h3 class="text-lg font-bold mb-2">주간 뉴스레터</h3>
             <p class="text-gray-600 text-sm">한 주간의 경제 동향을 정리해드려요</p>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 85%"></div>
+            </div>
         </div>
 
         <!-- 카드뉴스로 보는 금융이야기 -->
@@ -322,30 +342,33 @@
             </div>
             <h3 class="text-lg font-bold mb-2">카드뉴스로 보는 금융이야기</h3>
             <p class="text-gray-600 text-sm">시각적으로 쉽게 배우는 금융 지식</p>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 30%"></div>
+            </div>
         </div>
     </div>
 
     <!-- 하단 네비게이션 -->
     <div class="bottom-navigation">
         <div class="nav-container">
-            <button onclick="navigateToPage('index.html')" class="nav-item">
+            <button onclick="location.href='index.html'" class="nav-item">
                 <i class="fas fa-home text-gray-400"></i>
                 <span class="text-gray-400">홈</span>
             </button>
-            <button onclick="navigateToPage('a2.html')" class="nav-item active">
+            <button onclick="location.href='a2.html'" class="nav-item active">
                 <i class="fas fa-newspaper"></i>
                 <span>뉴스</span>
             </button>
             <div class="nav-center">
-                <div id="navLevelBadge" class="level-badge-nav level-yellow" onclick="navigateToPage('a5.html')">
+                <div class="level-badge-nav level-yellow" onclick="location.href='a5.html'" id="navLevelBadge">
                     YELLOW
                 </div>
             </div>
-            <button onclick="navigateToPage('a4.html')" class="nav-item">
+            <button onclick="location.href='a4.html'" class="nav-item">
                 <i class="fas fa-gamepad text-gray-400"></i>
                 <span class="text-gray-400">게임</span>
             </button>
-            <button onclick="navigateToPage('a3.html')" class="nav-item">
+            <button onclick="location.href='a3.html'" class="nav-item">
                 <i class="fas fa-ellipsis-h text-gray-400"></i>
                 <span class="text-gray-400">더보기</span>
             </button>
@@ -353,243 +376,541 @@
     </div>
 </div>
 
-<!-- 모달 공통 구조 -->
-<div id="commonModal" class="modal">
+<!-- 오늘의 금융 용어 모달 -->
+<div id="todayTermModal" class="modal">
     <div class="modal-content">
         <div class="flex justify-between items-center mb-4">
-            <h3 id="modalTitle" class="text-xl font-bold"></h3>
-            <button onclick="closeCommonModal()" class="text-gray-500 hover:text-gray-700">
+            <h3 class="text-xl font-bold">오늘의 금융 용어</h3>
+            <button onclick="closeTodayTermModal()" class="text-gray-500 hover:text-gray-700">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
-        <div id="modalBody"></div>
+        
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mb-4">
+                <i class="fas fa-star text-white text-2xl"></i>
+            </div>
+            <h4 class="text-2xl font-bold text-gray-800 mb-2" id="todayTermName">복리 (Compound Interest)</h4>
+            <p class="text-gray-600 text-sm">2024년 1월 15일</p>
+        </div>
+
+        <div class="bg-blue-50 rounded-lg p-4 mb-4">
+            <p class="text-gray-700 leading-relaxed" id="todayTermDefinition">
+                원금에 대한 이자가 다시 원금에 더해져서 그 합계에 대해 다음 기간의 이자가 계산되는 방식입니다. 
+                시간이 지날수록 이자가 기하급수적으로 증가하는 '눈덩이 효과'를 가져옵니다.
+            </p>
+        </div>
+
+        <div class="mb-4">
+            <h5 class="font-semibold mb-2">💡 쉬운 예시</h5>
+            <p class="text-sm text-gray-600" id="todayTermExample">
+                100만원을 연 10% 복리로 투자하면:<br>
+                1년 후: 110만원<br>
+                2년 후: 121만원 (110만원 × 1.1)<br>
+                3년 후: 133만원 (121만원 × 1.1)
+            </p>
+        </div>
+
+        <button onclick="completeTodayTerm()" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg font-semibold">
+            <i class="fas fa-check mr-2"></i>
+            학습 완료 (+50 EXP)
+        </button>
     </div>
 </div>
 
+<!-- 실시간 뉴스 모달 -->
+<div id="realNewsModal" class="modal">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">실시간 경제 뉴스</h3>
+            <button onclick="closeRealNewsModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="mb-4">
+            <div class="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-4 rounded-lg mb-4">
+                <h4 class="text-lg font-bold mb-2">📈 최신 경제 뉴스</h4>
+                <p class="text-sm opacity-90" id="newsUpdateTime">업데이트 시간: 로딩 중...</p>
+            </div>
+            
+            <div id="realNewsList" class="space-y-3">
+                <div class="text-center py-8">
+                    <div class="loading-spinner mx-auto mb-4"></div>
+                    <p class="text-gray-500">최신 뉴스를 불러오는 중...</p>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="completeRealNews()" class="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3 rounded-lg font-semibold">
+            <i class="fas fa-check mr-2"></i>
+            뉴스 확인 완료 (+75 EXP)
+        </button>
+    </div>
+</div>
+
+<!-- 오늘의 뉴스레터 모달 -->
+<div id="todayNewsletterModal" class="modal">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">오늘의 뉴스레터</h3>
+            <button onclick="closeTodayNewsletterModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="mb-4">
+            <div class="bg-gradient-to-r from-purple-500 to-blue-500 text-white p-4 rounded-lg mb-4">
+                <h4 class="text-lg font-bold mb-2">📰 오늘의 경제 이슈</h4>
+                <p class="text-sm opacity-90">2024년 1월 15일</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="border-l-4 border-red-500 pl-4">
+                    <h5 class="font-semibold text-red-600 mb-1">🔥 주요 뉴스</h5>
+                    <p class="text-sm text-gray-700">미 연준, 기준금리 동결 결정... 증시 상승 마감</p>
+                </div>
+                
+                <div class="border-l-4 border-green-500 pl-4">
+                    <h5 class="font-semibold text-green-600 mb-1">📊 시장 동향</h5>
+                    <p class="text-sm text-gray-700">코스피 2,650선 회복, 외국인 매수세 지속</p>
+                </div>
+                
+                <div class="border-l-4 border-blue-500 pl-4">
+                    <h5 class="font-semibold text-blue-600 mb-1">💰 투자 포인트</h5>
+                    <p class="text-sm text-gray-700">배당주와 성장주의 균형 포트폴리오 추천</p>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="completeTodayNewsletter()" class="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-lg font-semibold">
+            <i class="fas fa-check mr-2"></i>
+            읽기 완료 (+100 EXP)
+        </button>
+    </div>
+</div>
+
+<!-- 금융 용어 공부 모달 -->
+<div id="termStudyModal" class="modal">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">금융 용어 공부하기</h3>
+            <button onclick="closeTermStudyModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="mb-4">
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button class="bg-blue-100 hover:bg-blue-200 p-3 rounded-lg text-sm font-semibold text-blue-800 transition-colors">
+                    <i class="fas fa-chart-line mb-2"></i><br>
+                    주식 기초
+                </button>
+                <button class="bg-green-100 hover:bg-green-200 p-3 rounded-lg text-sm font-semibold text-green-800 transition-colors">
+                    <i class="fas fa-certificate mb-2"></i><br>
+                    채권 기초
+                </button>
+                <button class="bg-purple-100 hover:bg-purple-200 p-3 rounded-lg text-sm font-semibold text-purple-800 transition-colors">
+                    <i class="fas fa-piggy-bank mb-2"></i><br>
+                    저축 투자
+                </button>
+                <button class="bg-orange-100 hover:bg-orange-200 p-3 rounded-lg text-sm font-semibold text-orange-800 transition-colors">
+                    <i class="fas fa-coins mb-2"></i><br>
+                    암호화폐
+                </button>
+            </div>
+            
+            <div class="space-y-2" id="termList">
+                <div class="real-news-item" onclick="showTermDetail('PER', 'Price Earnings Ratio', '주가수익비율로, 주가를 주당순이익으로 나눈 값입니다.')">
+                    <h5 class="font-semibold">PER (주가수익비율)</h5>
+                    <p class="text-sm text-gray-600">주식의 가치를 평가하는 지표</p>
+                </div>
+                
+                <div class="real-news-item" onclick="showTermDetail('ROE', 'Return On Equity', '자기자본이익률로, 기업이 주주의 투자금을 얼마나 효율적으로 사용하는지 나타냅니다.')">
+                    <h5 class="font-semibold">ROE (자기자본이익률)</h5>
+                    <p class="text-sm text-gray-600">기업의 수익성을 측정하는 지표</p>
+                </div>
+                
+                <div class="real-news-item" onclick="showTermDetail('배당수익률', 'Dividend Yield', '주가 대비 배당금의 비율로, 투자한 금액 대비 얼마의 배당을 받는지 나타냅니다.')">
+                    <h5 class="font-semibold">배당수익률</h5>
+                    <p class="text-sm text-gray-600">배당 투자의 핵심 지표</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 주간 뉴스레터 모달 -->
+<div id="weeklyNewsletterModal" class="modal">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">주간 뉴스레터</h3>
+            <button onclick="closeWeeklyNewsletterModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="mb-4">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-4 rounded-lg mb-4">
+                <h4 class="text-lg font-bold mb-2">📰 이번 주 경제 리뷰</h4>
+                <p class="text-sm opacity-90">2024년 1월 8일 - 1월 14일</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="real-news-item" onclick="showNewsletterDetail('월요일', '미 인플레이션 지표 발표', '소비자물가지수(CPI)가 전년 동월 대비 3.2% 상승하며 예상치를 하회했습니다.')">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h5 class="font-semibold">월요일 - 미 인플레이션 지표</h5>
+                            <p class="text-xs text-gray-500">CPI 3.2% 상승</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="real-news-item" onclick="showNewsletterDetail('수요일', '한국은행 기준금리 동결', '한국은행이 기준금리를 3.50%로 동결하며 안정적 통화정책을 유지하기로 했습니다.')">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h5 class="font-semibold">수요일 - 한은 금리 동결</h5>
+                            <p class="text-xs text-gray-500">3.50% 유지</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="real-news-item" onclick="showNewsletterDetail('금요일', '대형 IT 기업 실적 발표', '애플, 마이크로소프트 등 빅테크 기업들의 4분기 실적이 시장 예상을 상회했습니다.')">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h5 class="font-semibold">금요일 - 빅테크 실적</h5>
+                            <p class="text-xs text-gray-500">예상 상회</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="completeWeeklyNewsletter()" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-lg font-semibold">
+            <i class="fas fa-check mr-2"></i>
+            주간 리뷰 완료 (+150 EXP)
+        </button>
+    </div>
+</div>
+
+<!-- 카드뉴스 모달 -->
+<div id="cardNewsModal" class="modal">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">카드뉴스로 보는 금융이야기</h3>
+            <button onclick="closeCardNewsModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="real-news-item" onclick="showCardNewsDetail('투자 기초', '처음 시작하는 투자')">
+                <div class="bg-blue-50 text-center py-8 rounded-lg mb-3">
+                    <i class="fas fa-seedling text-blue-500 text-3xl"></i>
+                </div>
+                <div class="p-4">
+                    <h5 class="font-semibold mb-2">투자 기초 가이드</h5>
+                    <p class="text-sm text-gray-600">처음 시작하는 투자, 무엇부터 해야 할까요?</p>
+                </div>
+            </div>
+            
+            <div class="real-news-item" onclick="showCardNewsDetail('분산투자', '리스크 관리의 핵심')">
+                <div class="bg-green-50 text-center py-8 rounded-lg mb-3">
+                    <i class="fas fa-chart-pie text-green-500 text-3xl"></i>
+                </div>
+                <div class="p-4">
+                    <h5 class="font-semibold mb-2">분산투자의 중요성</h5>
+                    <p class="text-sm text-gray-600">계란을 한 바구니에 담지 마라의 진정한 의미</p>
+                </div>
+            </div>
+            
+            <div class="real-news-item" onclick="showCardNewsDetail('복리효과', '시간의 마법')">
+                <div class="bg-purple-50 text-center py-8 rounded-lg mb-3">
+                    <i class="fas fa-magic text-purple-500 text-3xl"></i>
+                </div>
+                <div class="p-4">
+                    <h5 class="font-semibold mb-2">복리의 마법</h5>
+                    <p class="text-sm text-gray-600">시간이 만들어내는 놀라운 수익의 비밀</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 // 전역 변수
-var currentUser = null;
-var NEWS_API_KEY = '2b4b509767814a05ab2cc4e8cd2c1234'; // 데모용 키, 실제 사용 시 자신의 키로 교체 필요
+var currentUser = JSON.parse(localStorage.getItem('fineu_current_user')) || null;
+var userExp = 0;
 
-var levelSystem = {
-    yellow: { name: 'YELLOW', class: 'level-yellow' },
-    orange: { name: 'ORANGE', class: 'level-orange' },
-    green: { name: 'GREEN', class: 'level-green' },
-    blue: { name: 'BLUE', class: 'level-blue' },
-    brown: { name: 'BROWN', class: 'level-brown' },
-    black: { name: 'BLACK', class: 'level-black' },
-    red: { name: 'RED', class: 'level-red' }
-};
+// API 키 설정 (실제 운영시에는 서버에서 관리)
+var NEWS_API_KEY = 'YOUR_NEWS_API_KEY_HERE';
 
-// --- 데이터 연동 로직 ---
-function loadUserData() {
-    try {
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-        } else {
-            window.location.href = 'index.html';
-        }
-    } catch (error) {
-        console.error("데이터 로드 오류:", error);
-        window.location.href = 'index.html';
-    }
-}
+// 페이지 로드 시 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    updateUserLevel();
+    loadCachedNews();
+});
 
-function saveUserData() {
+// 사용자 레벨 업데이트
+function updateUserLevel() {
     if (currentUser) {
-        try {
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        } catch (error) {
-            console.error("데이터 저장 오류:", error);
+        var levelBadge = document.getElementById('navLevelBadge');
+        if (levelBadge) {
+            var levelClass = 'level-' + (currentUser.level || 'yellow');
+            var levelName = (currentUser.level || 'yellow').toUpperCase();
+            levelBadge.className = 'level-badge-nav ' + levelClass;
+            levelBadge.textContent = levelName;
         }
+        userExp = currentUser.exp || 0;
     }
 }
 
-function navigateToPage(page) {
-    saveUserData();
-    window.location.href = page + '?v=' + new Date().getTime();
-}
-
+// 뉴스 새로고침
 function refreshNews() {
+    loadRealTimeNews();
     location.reload();
 }
 
-// 모달
-function openModal(title, content) {
-    document.getElementById('modalTitle').innerHTML = title;
-    document.getElementById('modalBody').innerHTML = content;
-    document.getElementById('commonModal').classList.add('show');
+// 실시간 뉴스 로드
+function loadRealTimeNews() {
+    // 실제 뉴스 API 연동 (NewsAPI, Guardian API 등 사용 가능)
+    // CORS 이슈로 인해 실제 프로덕션에서는 서버를 통해 API 호출 필요
+    
+    // 임시 데이터로 시뮬레이션
+    var sampleNews = [
+        {
+            title: "한국은행, 기준금리 3.50% 동결 결정",
+            description: "물가안정 목표 달성을 위해 현 수준 유지",
+            source: "한국은행",
+            publishedAt: new Date().toISOString(),
+            url: "#"
+        },
+        {
+            title: "코스피, 외국인 매수세에 2,650선 회복",
+            description: "기술주 중심으로 상승세, 반도체 업종 강세",
+            source: "한국거래소",
+            publishedAt: new Date(Date.now() - 3600000).toISOString(),
+            url: "#"
+        },
+        {
+            title: "미 연준 의장, 인플레이션 둔화 긍정 평가",
+            description: "점진적 금리 인하 가능성 시사",
+            source: "연합뉴스",
+            publishedAt: new Date(Date.now() - 7200000).toISOString(),
+            url: "#"
+        },
+        {
+            title: "원/달러 환율, 1,300원대 중반 등락",
+            description: "미 달러 약세로 원화 소폭 강세",
+            source: "한국경제",
+            publishedAt: new Date(Date.now() - 10800000).toISOString(),
+            url: "#"
+        },
+        {
+            title: "삼성전자, 4분기 실적 시장 예상치 상회",
+            description: "메모리 반도체 수요 회복으로 수익성 개선",
+            source: "매일경제",
+            publishedAt: new Date(Date.now() - 14400000).toISOString(),
+            url: "#"
+        }
+    ];
+    
+    // 뉴스 데이터 캐시에 저장
+    localStorage.setItem('cached_news', JSON.stringify({
+        data: sampleNews,
+        timestamp: Date.now()
+    }));
+    
+    return sampleNews;
 }
-function closeCommonModal() {
-    document.getElementById('commonModal').classList.remove('show');
+
+// 캐시된 뉴스 로드
+function loadCachedNews() {
+    try {
+        var cached = localStorage.getItem('cached_news');
+        if (cached) {
+            var newsData = JSON.parse(cached);
+            // 1시간 이내 데이터면 캐시 사용
+            if (Date.now() - newsData.timestamp < 3600000) {
+                return newsData.data;
+            }
+        }
+    } catch (error) {
+        console.error('캐시 뉴스 로드 오류:', error);
+    }
+    
+    // 캐시가 없거나 오래된 경우 새로 로드
+    return loadRealTimeNews();
+}
+
+// 경험치 추가 및 동기화
+function addExperience(amount) {
+    userExp += amount;
+    
+    if (currentUser) {
+        currentUser.exp = userExp;
+        localStorage.setItem('fineu_current_user', JSON.stringify(currentUser));
+        localStorage.setItem('user_' + currentUser.id, JSON.stringify(currentUser));
+    }
 }
 
 // 오늘의 금융 용어
 function showTodayTerm() {
-    const terms = [
-        { term: '복리 (Compound Interest)', def: '원금에 대한 이자가 다시 원금에 더해져서 그 합계에 대해 다음 기간의 이자가 계산되는 방식입니다.', ex: '100만원을 연 10% 복리로 투자하면 2년 후 121만원이 됩니다.'},
-        { term: '인플레이션 (Inflation)', def: '화폐가치가 하락하여 물가가 전반적, 지속적으로 상승하는 경제 현상입니다.', ex: '작년에 1000원 하던 과자가 올해 1100원이 되는 현상입니다.'},
-        { term: '유동성 (Liquidity)', def: '자산을 현금으로 얼마나 쉽게 바꿀 수 있는지를 나타내는 정도입니다.', ex: '예금은 유동성이 높지만, 부동산은 유동성이 낮습니다.'}
-    ];
-    const todayTerm = terms[Math.floor(Math.random() * terms.length)];
-    const title = `<i class="fas fa-star text-yellow-500 mr-2"></i>오늘의 금융 용어`;
-    const content = `
-        <h4 class="text-2xl font-bold text-gray-800 mb-2">${todayTerm.term}</h4>
-        <div class="bg-blue-50 rounded-lg p-4 mb-4">
-            <p class="text-gray-700 leading-relaxed">${todayTerm.def}</p>
-        </div>
-        <div class="mb-4">
-            <h5 class="font-semibold mb-2">💡 쉬운 예시</h5>
-            <p class="text-sm text-gray-600">${todayTerm.ex}</p>
-        </div>
-        <button onclick="completeContent(50, '금융 용어')" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg font-semibold">
-            <i class="fas fa-check mr-2"></i>학습 완료 (+50 EXP)
-        </button>`;
-    openModal(title, content);
+    document.getElementById('todayTermModal').classList.add('show');
 }
 
-// 뉴스레터 (API 호출 수정)
-async function showTodayNewsletter() {
-    const title = `<i class="fas fa-newspaper text-purple-500 mr-2"></i>오늘의 뉴스레터`;
-    openModal(title, `<div class="text-center py-8">최신 뉴스를 불러오는 중...</div>`);
-    const newsHTML = await fetchNews('finance OR economy');
-    const content = `
-        <div class="space-y-4">${newsHTML}</div>
-        <button onclick="completeContent(100, '오늘의 뉴스레터')" class="w-full mt-6 bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-lg font-semibold">
-            <i class="fas fa-check mr-2"></i>읽기 완료 (+100 EXP)
-        </button>`;
-    openModal(title, content);
+function closeTodayTermModal() {
+    document.getElementById('todayTermModal').classList.remove('show');
 }
 
-async function showWeeklyNewsletter() {
-    const title = `<i class="fas fa-calendar-week text-indigo-500 mr-2"></i>주간 뉴스레터`;
-    openModal(title, `<div class="text-center py-8">주간 뉴스를 불러오는 중...</div>`);
-    const newsHTML = await fetchNews('korea economy weekly');
-     const content = `
-        <div class="space-y-4">${newsHTML}</div>
-        <button onclick="completeContent(150, '주간 뉴스레터')" class="w-full mt-6 bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-lg font-semibold">
-            <i class="fas fa-check mr-2"></i>주간 리뷰 완료 (+150 EXP)
-        </button>`;
-    openModal(title, content);
+function completeTodayTerm() {
+    addExperience(50);
+    alert('오늘의 금융 용어 학습을 완료했습니다! (+50 EXP)');
+    closeTodayTermModal();
+}
+
+// 실시간 뉴스
+function showRealNews() {
+    var modal = document.getElementById('realNewsModal');
+    var newsList = document.getElementById('realNewsList');
+    var updateTime = document.getElementById('newsUpdateTime');
+    
+    modal.classList.add('show');
+    
+    // 로딩 상태 표시
+    newsList.innerHTML = '<div class="text-center py-8"><div class="loading-spinner mx-auto mb-4"></div><p class="text-gray-500">최신 뉴스를 불러오는 중...</p></div>';
+    
+    // 뉴스 데이터 로드
+    setTimeout(function() {
+        var newsData = loadCachedNews();
+        updateTime.textContent = '업데이트 시간: ' + new Date().toLocaleString();
+        
+        var newsHTML = '';
+        newsData.forEach(function(news, index) {
+            var publishTime = new Date(news.publishedAt);
+            var timeAgo = getTimeAgo(publishTime);
+            
+            newsHTML += '<div class="real-news-item" onclick="openNewsLink(\'' + news.url + '\')">';
+            newsHTML += '<h5 class="font-semibold mb-2">' + news.title + '</h5>';
+            newsHTML += '<p class="text-sm text-gray-600 mb-2">' + news.description + '</p>';
+            newsHTML += '<div class="flex justify-between items-center">';
+            newsHTML += '<span class="news-source">' + news.source + '</span>';
+            newsHTML += '<span class="news-date">' + timeAgo + '</span>';
+            newsHTML += '</div></div>';
+        });
+        
+        newsList.innerHTML = newsHTML;
+    }, 1000);
+}
+
+function closeRealNewsModal() {
+    document.getElementById('realNewsModal').classList.remove('show');
+}
+
+function completeRealNews() {
+    addExperience(75);
+    alert('실시간 뉴스 확인을 완료했습니다! (+75 EXP)');
+    closeRealNewsModal();
+}
+
+function openNewsLink(url) {
+    if (url !== '#') {
+        window.open(url, '_blank');
+    }
+    addExperience(25);
+}
+
+// 시간 계산 함수
+function getTimeAgo(date) {
+    var now = new Date();
+    var diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) {
+        return '방금 전';
+    } else if (diffInSeconds < 3600) {
+        return Math.floor(diffInSeconds / 60) + '분 전';
+    } else if (diffInSeconds < 86400) {
+        return Math.floor(diffInSeconds / 3600) + '시간 전';
+    } else {
+        return Math.floor(diffInSeconds / 86400) + '일 전';
+    }
+}
+
+// 오늘의 뉴스레터
+function showTodayNewsletter() {
+    document.getElementById('todayNewsletterModal').classList.add('show');
+}
+
+function closeTodayNewsletterModal() {
+    document.getElementById('todayNewsletterModal').classList.remove('show');
+}
+
+function completeTodayNewsletter() {
+    addExperience(100);
+    alert('오늘의 뉴스레터 읽기를 완료했습니다! (+100 EXP)');
+    closeTodayNewsletterModal();
 }
 
 // 금융 용어 공부
 function showTermStudy() {
-    const title = `<i class="fas fa-book text-blue-500 mr-2"></i>금융 용어 공부하기`;
-    const content = `
-        <div class="grid grid-cols-2 gap-3 mb-4">
-            <button class="bg-blue-100 hover:bg-blue-200 p-3 rounded-lg text-sm font-semibold text-blue-800 transition-colors">주식 기초</button>
-            <button class="bg-green-100 hover:bg-green-200 p-3 rounded-lg text-sm font-semibold text-green-800 transition-colors">채권 기초</button>
-            <button class="bg-purple-100 hover:bg-purple-200 p-3 rounded-lg text-sm font-semibold text-purple-800 transition-colors">저축 투자</button>
-            <button class="bg-orange-100 hover:bg-orange-200 p-3 rounded-lg text-sm font-semibold text-orange-800 transition-colors">암호화폐</button>
-        </div>
-        <div class="space-y-2">
-            <div class="term-card" onclick="showTermDetail('PER', '주가수익비율', '주가를 주당순이익으로 나눈 값입니다.')">
-                <h5 class="font-semibold">PER (주가수익비율)</h5><p class="text-sm text-gray-600">주식의 가치를 평가하는 지표</p>
-            </div>
-            <div class="term-card" onclick="showTermDetail('ROE', '자기자본이익률', '기업이 주주의 투자금을 얼마나 효율적으로 사용하는지 나타냅니다.')">
-                <h5 class="font-semibold">ROE (자기자본이익률)</h5><p class="text-sm text-gray-600">기업의 수익성을 측정하는 지표</p>
-            </div>
-        </div>`;
-    openModal(title, content);
+    document.getElementById('termStudyModal').classList.add('show');
 }
+
+function closeTermStudyModal() {
+    document.getElementById('termStudyModal').classList.remove('show');
+}
+
 function showTermDetail(term, fullName, description) {
-    alert(`📚 ${term} (${fullName})\n\n${description}`);
+    alert('📚 ' + term + ' (' + fullName + ')\n\n' + description + '\n\n+25 EXP 획득!');
     addExperience(25);
+}
+
+// 주간 뉴스레터
+function showWeeklyNewsletter() {
+    document.getElementById('weeklyNewsletterModal').classList.add('show');
+}
+
+function closeWeeklyNewsletterModal() {
+    document.getElementById('weeklyNewsletterModal').classList.remove('show');
+}
+
+function showNewsletterDetail(day, title, content) {
+    alert('📅 ' + day + '\n' + title + '\n\n' + content + '\n\n+30 EXP 획득!');
+    addExperience(30);
+}
+
+function completeWeeklyNewsletter() {
+    addExperience(150);
+    alert('주간 뉴스레터 읽기를 완료했습니다! (+150 EXP)');
+    closeWeeklyNewsletterModal();
 }
 
 // 카드뉴스
 function showCardNews() {
-    const title = `<i class="fas fa-images text-green-500 mr-2"></i>카드뉴스로 보는 금융이야기`;
-    const cardNewsItems = [
-        { title: '투자 기초 가이드', sub: '처음 시작하는 투자, 무엇부터?', icon: 'fa-seedling', img: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400' },
-        { title: '분산투자의 중요성', sub: '계란을 한 바구니에 담지 마라', icon: 'fa-chart-pie', img: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400' },
-        { title: '복리의 마법', sub: '시간이 만들어내는 놀라운 수익', icon: 'fa-magic', img: 'https://images.unsplash.com/photo-1642543348745-03b1219c3664?w=400' }
-    ];
-    let content = '<div class="space-y-4">';
-    cardNewsItems.forEach(item => {
-        content += `
-            <div class="card-news-item" onclick="showCardNewsDetail('${item.title}', '${item.sub}')">
-                <div class="card-news-image" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${item.img})">
-                    <i class="fas ${item.icon}"></i>
-                </div>
-                <div class="p-4">
-                    <h5 class="font-semibold mb-2">${item.title}</h5>
-                    <p class="text-sm text-gray-600">${item.sub}</p>
-                </div>
-            </div>`;
-    });
-    content += '</div>';
-    openModal(title, content);
+    document.getElementById('cardNewsModal').classList.add('show');
 }
+
+function closeCardNewsModal() {
+    document.getElementById('cardNewsModal').classList.remove('show');
+}
+
 function showCardNewsDetail(title, subtitle) {
-    alert(`🎨 ${title}\n${subtitle}`);
+    alert('🎨 ' + title + '\n' + subtitle + '\n\n시각적으로 쉽게 배우는 금융 지식!\n\n+75 EXP 획득!');
     addExperience(75);
 }
 
-// 뉴스 API 호출 (CORS 문제 해결)
-async function fetchNews(query) {
-    const proxyUrl = 'https://api.allorigins.win/raw?url=';
-    const apiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=ko&sortBy=publishedAt&pageSize=3&apiKey=${NEWS_API_KEY}`;
-    
-    try {
-        const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-        
-        if (data.articles && data.articles.length > 0) {
-            return data.articles.map(article => `
-                <div class="newsletter-item" onclick="window.open('${article.url}', '_blank')">
-                    <h5 class="font-semibold">${article.title}</h5>
-                    <p class="text-xs text-gray-500">${article.source.name} - ${new Date(article.publishedAt).toLocaleDateString()}</p>
-                    <p class="text-sm text-gray-700 mt-1">${article.description || ''}</p>
-                </div>`
-            ).join('');
-        } else {
-            return `<p>관련 뉴스를 찾을 수 없습니다.</p>`;
-        }
-    } catch (error) {
-        console.error('Fetch error:', error);
-        return `<p>뉴스를 불러오는 중 오류가 발생했습니다. API 키가 유효한지 확인해주세요.</p>`;
-    }
-}
-
-// 경험치 추가
-function addExperience(amount) {
-    if(currentUser) {
-        currentUser.exp = (currentUser.exp || 0) + amount;
-        alert(`경험치 ${amount} EXP를 획득했습니다!`);
-        // 레벨업 체크는 a5.html 또는 index.html에서 처리
-    }
-}
-
-function completeContent(amount, type) {
-    addExperience(amount);
-    closeCommonModal();
-}
-
-// 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    loadUserData();
-    if (!currentUser) return;
-
-    var userLevel = currentUser.level || 'yellow';
-    var levelBadge = document.getElementById('navLevelBadge');
-    if (levelBadge && levelSystem[userLevel]) {
-        levelBadge.className = 'level-badge-nav ' + levelSystem[userLevel].class;
-        levelBadge.textContent = levelSystem[userLevel].name;
-    }
-    
-    document.getElementById('commonModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeCommonModal();
+// 모달 외부 클릭시 닫기
+document.addEventListener('click', function(e) {
+    var modals = document.querySelectorAll('.modal');
+    modals.forEach(function(modal) {
+        if (e.target === modal) {
+            modal.classList.remove('show');
         }
     });
 });
-
-window.addEventListener('beforeunload', saveUserData);
 </script>
 
 </body>
