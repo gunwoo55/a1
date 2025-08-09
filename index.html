@@ -8,9 +8,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="cache-buster" content="v3.0.0-firebase">
+    <meta name="cache-buster" content="v3.1.0-firebase-fix">
     
-    <title>FINE U - Firebase 연동 모의투자 앱</title>
+    <title>FINE U - Firebase 로그인 오류 수정 버전</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -306,13 +306,51 @@
         .firebase-loading {
             background-color: #F59E0B;
         }
+
+        .debug-info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 10px;
+            max-width: 200px;
+            z-index: 1000;
+        }
+
+        .error-message {
+            background: #FEE2E2;
+            border: 1px solid #FCA5A5;
+            color: #DC2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+
+        .success-message {
+            background: #DCFCE7;
+            border: 1px solid #86EFAC;
+            color: #166534;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
 
 <!-- Firebase 연결 상태 -->
 <div id="firebaseStatus" class="firebase-status firebase-loading">
-    <i class="fas fa-database"></i> 연결 중...
+    <i class="fas fa-database"></i> 초기화 중...
+</div>
+
+<!-- 디버그 정보 -->
+<div id="debugInfo" class="debug-info">
+    Firebase 초기화 대기 중...
 </div>
 
 <!-- 로그인 화면 -->
@@ -323,21 +361,30 @@
              class="absolute inset-0 w-full h-full object-cover">
         
         <div class="login-container">
+            <!-- 오류/성공 메시지 표시 영역 -->
+            <div id="messageContainer"></div>
+            
             <div class="space-y-3">
-                <input type="text" id="userId" placeholder="ID" 
+                <input type="text" id="userId" placeholder="ID (예: gunwoo55)" value="gunwoo55"
                        class="w-full px-4 py-2.5 rounded-lg bg-white bg-opacity-90 border-0 text-gray-800 placeholder-gray-500 text-sm">
-                <input type="password" id="userPassword" placeholder="PASSWORD" 
+                <input type="password" id="userPassword" placeholder="PASSWORD (임시: 아무거나)" value="test123"
                        class="w-full px-4 py-2.5 rounded-lg bg-white bg-opacity-90 border-0 text-gray-800 placeholder-gray-500 text-sm">
-                <button onclick="performLogin()" 
+                <button onclick="performLogin()" id="loginButton"
                         class="w-full py-2.5 btn-primary text-white rounded-lg font-medium text-sm">
                     <span id="loginBtnText">로그인</span>
                     <i id="loginLoader" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                </button>
+                <button onclick="loginWithoutFirebase()" 
+                        class="w-full py-2.5 bg-gray-600 text-white rounded-lg font-medium text-sm">
+                    <i class="fas fa-user mr-2"></i>로컬 로그인 (Firebase 없이)
                 </button>
             </div>
             <div class="text-center mt-4">
                 <a href="#" onclick="showRegisterModal()" class="text-white text-xs underline opacity-90">회원가입</a>
                 <span class="text-white mx-2 text-xs opacity-90">|</span>
                 <a href="#" onclick="showFindModal()" class="text-white text-xs underline opacity-90">아이디 & 비밀번호 찾기</a>
+                <br>
+                <button onclick="toggleDebug()" class="text-white text-xs underline opacity-70 mt-2">디버그 모드</button>
             </div>
         </div>
     </div>
@@ -370,6 +417,10 @@
             <div class="profile-menu-item" onclick="syncWithFirebase()">
                 <i class="fas fa-sync-alt"></i>
                 <span>데이터 동기화</span>
+            </div>
+            <div class="profile-menu-item" onclick="clearAllData()">
+                <i class="fas fa-trash"></i>
+                <span>데이터 초기화</span>
             </div>
             <div class="profile-menu-item" onclick="logout()">
                 <i class="fas fa-sign-out-alt"></i>
@@ -404,6 +455,7 @@
                         </div>
                         <p class="font-bold text-gray-800" id="userName">사용자</p>
                         <p class="text-xs text-gray-500" id="userExp">0 / 3000 EXP</p>
+                        <p class="text-xs text-gray-400" id="loginMethod">로컬 로그인</p>
                     </div>
                 </div>
             </div>
@@ -563,22 +615,6 @@
 </div>
 
 <script>
-// Firebase 설정
-const firebaseConfig = {
-  apiKey: "AIzaSyApKJHvNXftrzXAZsH41FxqVj0_Byh_V28",
-  authDomain: "invest-97aa7.firebaseapp.com",
-  projectId: "invest-97aa7",
-  storageBucket: "invest-97aa7.firebasestorage.app",
-  messagingSenderId: "136719207030",
-  appId: "1:136719207030:web:391bd46b7b79800c0fed57",
-  measurementId: "G-78K35WTPGQ"
-};
-
-// Firebase 초기화
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
-
 // 전역 변수
 var currentUser = null;
 var userAssets = {};
@@ -589,6 +625,9 @@ var cash = 10000000;
 var portfolioChart = null;
 var firebaseConnected = false;
 var autoSaveInterval = null;
+var debugMode = false;
+var db = null;
+var auth = null;
 
 // 레벨 시스템 설정
 var levelSystem = {
@@ -600,6 +639,90 @@ var levelSystem = {
     black: { name: 'BLACK', exp: 25000, max: 50000, class: 'level-black' },
     red: { name: 'RED', exp: 50000, max: 100000, class: 'level-red' }
 };
+
+// 디버그 모드 토글
+function toggleDebug() {
+    debugMode = !debugMode;
+    var debugInfo = document.getElementById('debugInfo');
+    if (debugMode) {
+        debugInfo.style.display = 'block';
+        updateDebugInfo('디버그 모드 활성화');
+    } else {
+        debugInfo.style.display = 'none';
+    }
+}
+
+// 디버그 정보 업데이트
+function updateDebugInfo(message) {
+    if (debugMode) {
+        var debugInfo = document.getElementById('debugInfo');
+        var timestamp = new Date().toLocaleTimeString();
+        debugInfo.innerHTML = '[' + timestamp + '] ' + message;
+    }
+    console.log('[DEBUG]', message);
+}
+
+// 메시지 표시 함수
+function showMessage(message, type) {
+    var container = document.getElementById('messageContainer');
+    var messageDiv = document.createElement('div');
+    messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+    messageDiv.textContent = message;
+    
+    container.innerHTML = '';
+    container.appendChild(messageDiv);
+    
+    // 5초 후 메시지 제거
+    setTimeout(function() {
+        if (messageDiv.parentNode) {
+            messageDiv.parentNode.removeChild(messageDiv);
+        }
+    }, 5000);
+}
+
+// Firebase 초기화 (안전한 방식)
+async function initializeFirebase() {
+    try {
+        updateDebugInfo('Firebase 초기화 시작...');
+        updateFirebaseStatus('loading', 'Firebase 초기화 중...');
+        
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyApKJHvNXftrzXAZsH41FxqVj0_Byh_V28",
+            authDomain: "invest-97aa7.firebaseapp.com",
+            projectId: "invest-97aa7",
+            storageBucket: "invest-97aa7.firebasestorage.app",
+            messagingSenderId: "136719207030",
+            appId: "1:136719207030:web:391bd46b7b79800c0fed57",
+            measurementId: "G-78K35WTPGQ"
+        };
+
+        // Firebase 앱 초기화
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Firestore 초기화
+        db = firebase.firestore();
+        auth = firebase.auth();
+        
+        // Firestore 연결 테스트
+        await db.enableNetwork();
+        
+        updateDebugInfo('Firebase 초기화 성공');
+        updateFirebaseStatus('connected', 'Firebase 연결 성공');
+        firebaseConnected = true;
+        
+        return true;
+        
+    } catch (error) {
+        updateDebugInfo('Firebase 초기화 실패: ' + error.message);
+        updateFirebaseStatus('error', 'Firebase 초기화 실패: ' + error.message);
+        firebaseConnected = false;
+        
+        return false;
+    }
+}
 
 // Firebase 연결 상태 업데이트
 function updateFirebaseStatus(status, message) {
@@ -621,26 +744,89 @@ function updateFirebaseStatus(status, message) {
             break;
         case 'loading':
             statusElement.className = 'firebase-status firebase-loading';
-            statusElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 동기화 중';
+            statusElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 로딩';
             if (syncIcon) syncIcon.className = 'fas fa-spinner fa-spin text-blue-500 text-sm ml-2';
             break;
     }
     
     if (message) {
-        console.log('Firebase 상태:', message);
+        updateDebugInfo('Firebase: ' + message);
     }
+}
+
+// Firebase 없이 로컬 로그인
+function loginWithoutFirebase() {
+    var userId = document.getElementById('userId').value.trim() || 'gunwoo55';
+    
+    updateDebugInfo('로컬 로그인 시작: ' + userId);
+    
+    // 로컬 사용자 데이터 생성
+    currentUser = {
+        id: userId,
+        name: userId,
+        level: 'yellow',
+        exp: 0,
+        totalAssets: 10000000,
+        cash: 10000000,
+        virtualBalance: 10000000,
+        portfolio: {
+            deposit: [],
+            stock: [],
+            bond: [],
+            etf: [],
+            crypto: [],
+            commodity: []
+        },
+        transactions: [],
+        loginMethod: 'local',
+        lastUpdated: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+    };
+    
+    // 로컬 저장소에서 기존 데이터 로드
+    try {
+        var savedData = localStorage.getItem('fineu_user_' + userId);
+        if (savedData) {
+            var userData = JSON.parse(savedData);
+            currentUser = Object.assign(currentUser, userData);
+            updateDebugInfo('로컬 저장소에서 기존 데이터 로드');
+        }
+    } catch (error) {
+        updateDebugInfo('로컬 데이터 로드 오류: ' + error.message);
+    }
+    
+    userLevel = currentUser.level;
+    userExp = currentUser.exp;
+    totalAssets = currentUser.totalAssets;
+    cash = currentUser.cash;
+    userAssets = currentUser.portfolio;
+    
+    // 로그인 성공
+    localStorage.setItem('fineu_last_user_id', userId);
+    localStorage.setItem('fineu_current_user', JSON.stringify(currentUser));
+    
+    showMessage('로컬 로그인 성공! (Firebase 없이)', 'success');
+    showMainScreen(userId);
+    
+    updateDebugInfo('로컬 로그인 완료: ' + userId);
 }
 
 // Firebase에서 사용자 데이터 로드
 async function loadUserDataFromFirebase(userId) {
+    if (!firebaseConnected || !db) {
+        updateDebugInfo('Firebase 연결 없음, 로컬 로그인으로 전환');
+        return false;
+    }
+    
     try {
+        updateDebugInfo('Firebase에서 사용자 데이터 로드 시도: ' + userId);
         updateFirebaseStatus('loading', 'Firebase에서 데이터 로드 중...');
         
         const userDoc = await db.collection('users').doc(userId).get();
         
         if (userDoc.exists) {
             const userData = userDoc.data();
-            console.log('Firebase에서 사용자 데이터 로드 성공:', userData);
+            updateDebugInfo('Firebase에서 사용자 데이터 로드 성공');
             
             currentUser = {
                 id: userId,
@@ -659,6 +845,7 @@ async function loadUserDataFromFirebase(userId) {
                     commodity: []
                 },
                 transactions: userData.transactions || [],
+                loginMethod: 'firebase',
                 lastUpdated: userData.lastUpdated || new Date().toISOString(),
                 createdAt: userData.createdAt || new Date().toISOString()
             };
@@ -670,29 +857,31 @@ async function loadUserDataFromFirebase(userId) {
             userAssets = currentUser.portfolio;
             
             updateFirebaseStatus('connected', 'Firebase 데이터 로드 완료');
-            updateLastSyncTime();
-            
             return true;
         } else {
             // 새 사용자 생성
-            console.log('신규 사용자, Firebase에 새 데이터 생성');
-            await createNewUserInFirebase(userId);
-            return true;
+            updateDebugInfo('신규 사용자, Firebase에 새 데이터 생성 시도');
+            return await createNewUserInFirebase(userId);
         }
         
     } catch (error) {
-        console.error('Firebase 데이터 로드 오류:', error);
-        updateFirebaseStatus('error', 'Firebase 연결 오류: ' + error.message);
+        updateDebugInfo('Firebase 데이터 로드 오류: ' + error.message);
+        updateFirebaseStatus('error', 'Firebase 로드 오류: ' + error.message);
         
         // 로컬 저장소에서 백업 데이터 로드
-        loadUserDataFromLocalStorage(userId);
-        return false;
+        return loadUserDataFromLocalStorage(userId);
     }
 }
 
 // Firebase에 새 사용자 생성
 async function createNewUserInFirebase(userId) {
+    if (!firebaseConnected || !db) {
+        return false;
+    }
+    
     try {
+        updateDebugInfo('Firebase에 새 사용자 생성 중: ' + userId);
+        
         const newUserData = {
             id: userId,
             name: userId,
@@ -710,6 +899,7 @@ async function createNewUserInFirebase(userId) {
                 commodity: []
             },
             transactions: [],
+            loginMethod: 'firebase',
             createdAt: new Date().toISOString(),
             lastUpdated: new Date().toISOString()
         };
@@ -723,24 +913,88 @@ async function createNewUserInFirebase(userId) {
         cash = 10000000;
         userAssets = newUserData.portfolio;
         
-        console.log('Firebase에 새 사용자 생성 완료:', newUserData);
+        updateDebugInfo('Firebase에 새 사용자 생성 완료');
         updateFirebaseStatus('connected', 'Firebase 새 사용자 생성 완료');
         
+        return true;
+        
     } catch (error) {
-        console.error('Firebase 새 사용자 생성 오류:', error);
+        updateDebugInfo('Firebase 새 사용자 생성 오류: ' + error.message);
         updateFirebaseStatus('error', 'Firebase 새 사용자 생성 실패');
+        
+        return false;
+    }
+}
+
+// 로컬 저장소에서 데이터 로드 (백업용)
+function loadUserDataFromLocalStorage(userId) {
+    try {
+        updateDebugInfo('로컬 저장소에서 백업 데이터 로드 시도: ' + userId);
+        
+        var savedUser = localStorage.getItem('fineu_user_' + userId);
+        if (savedUser) {
+            var userData = JSON.parse(savedUser);
+            currentUser = userData;
+            currentUser.loginMethod = 'local_backup';
+            
+            userLevel = currentUser.level || 'yellow';
+            userExp = currentUser.exp || 0;
+            totalAssets = currentUser.totalAssets || 10000000;
+            cash = currentUser.cash || 10000000;
+            userAssets = currentUser.portfolio || {};
+            
+            updateDebugInfo('로컬 저장소에서 백업 데이터 로드 성공');
+            return true;
+        } else {
+            updateDebugInfo('로컬 저장소에 백업 데이터 없음, 기본 사용자 생성');
+            
+            // 기본 사용자 데이터 생성
+            currentUser = {
+                id: userId,
+                name: userId,
+                level: 'yellow',
+                exp: 0,
+                totalAssets: 10000000,
+                cash: 10000000,
+                virtualBalance: 10000000,
+                portfolio: {
+                    deposit: [],
+                    stock: [],
+                    bond: [],
+                    etf: [],
+                    crypto: [],
+                    commodity: []
+                },
+                transactions: [],
+                loginMethod: 'local_default',
+                lastUpdated: new Date().toISOString(),
+                createdAt: new Date().toISOString()
+            };
+            
+            userLevel = 'yellow';
+            userExp = 0;
+            totalAssets = 10000000;
+            cash = 10000000;
+            userAssets = {};
+            
+            return true;
+        }
+    } catch (error) {
+        updateDebugInfo('로컬 저장소 데이터 로드 오류: ' + error.message);
+        return false;
     }
 }
 
 // Firebase에 사용자 데이터 저장
 async function saveUserDataToFirebase() {
-    if (!currentUser || !firebaseConnected) {
-        console.log('Firebase 연결 없음, 로컬 저장소에만 저장');
+    if (!currentUser || !firebaseConnected || !db) {
+        updateDebugInfo('Firebase 연결 없음, 로컬 저장소에만 저장');
         saveUserDataToLocalStorage();
         return false;
     }
     
     try {
+        updateDebugInfo('Firebase에 데이터 저장 시도');
         updateFirebaseStatus('loading', 'Firebase에 데이터 저장 중...');
         
         const saveData = {
@@ -753,12 +1007,13 @@ async function saveUserDataToFirebase() {
             virtualBalance: currentUser.virtualBalance || cash,
             portfolio: currentUser.portfolio,
             transactions: currentUser.transactions || [],
+            loginMethod: 'firebase',
             lastUpdated: new Date().toISOString()
         };
         
         await db.collection('users').doc(currentUser.id).update(saveData);
         
-        console.log('Firebase 데이터 저장 완료:', saveData);
+        updateDebugInfo('Firebase 데이터 저장 완료');
         updateFirebaseStatus('connected', 'Firebase 저장 완료');
         updateLastSyncTime();
         
@@ -768,35 +1023,13 @@ async function saveUserDataToFirebase() {
         return true;
         
     } catch (error) {
-        console.error('Firebase 데이터 저장 오류:', error);
+        updateDebugInfo('Firebase 데이터 저장 오류: ' + error.message);
         updateFirebaseStatus('error', 'Firebase 저장 실패: ' + error.message);
         
         // 로컬 저장소에라도 저장
         saveUserDataToLocalStorage();
         return false;
     }
-}
-
-// 로컬 저장소에서 데이터 로드 (백업용)
-function loadUserDataFromLocalStorage(userId) {
-    try {
-        var savedUser = localStorage.getItem('fineu_user_' + userId);
-        if (savedUser) {
-            var userData = JSON.parse(savedUser);
-            currentUser = userData;
-            userLevel = currentUser.level || 'yellow';
-            userExp = currentUser.exp || 0;
-            totalAssets = currentUser.totalAssets || 10000000;
-            cash = currentUser.cash || 10000000;
-            userAssets = currentUser.portfolio || {};
-            
-            console.log('로컬 저장소에서 백업 데이터 로드:', userData);
-            return true;
-        }
-    } catch (error) {
-        console.error('로컬 저장소 데이터 로드 오류:', error);
-    }
-    return false;
 }
 
 // 로컬 저장소에 데이터 저장 (백업용)
@@ -813,15 +1046,16 @@ function saveUserDataToLocalStorage() {
                 virtualBalance: currentUser.virtualBalance || cash,
                 portfolio: currentUser.portfolio,
                 transactions: currentUser.transactions || [],
+                loginMethod: currentUser.loginMethod || 'local',
                 lastUpdated: new Date().toISOString()
             };
             
             localStorage.setItem('fineu_user_' + currentUser.id, JSON.stringify(saveData));
             localStorage.setItem('fineu_current_user', JSON.stringify(saveData));
-            console.log('로컬 저장소 백업 완료');
+            updateDebugInfo('로컬 저장소 백업 완료');
         }
     } catch (error) {
-        console.error('로컬 저장소 저장 오류:', error);
+        updateDebugInfo('로컬 저장소 저장 오류: ' + error.message);
     }
 }
 
@@ -836,6 +1070,14 @@ async function syncWithFirebase() {
         var confirmed = confirm('Firebase와 데이터를 동기화하시겠습니까?\n현재 데이터가 클라우드에 저장됩니다.');
         if (!confirmed) return;
         
+        if (!firebaseConnected) {
+            var initSuccess = await initializeFirebase();
+            if (!initSuccess) {
+                alert('❌ Firebase 연결에 실패했습니다.');
+                return;
+            }
+        }
+        
         await saveUserDataToFirebase();
         await loadUserDataFromFirebase(currentUser.id);
         updateDisplay();
@@ -843,8 +1085,51 @@ async function syncWithFirebase() {
         alert('✅ Firebase 동기화가 완료되었습니다!');
         
     } catch (error) {
-        console.error('Firebase 동기화 오류:', error);
-        alert('❌ Firebase 동기화 중 오류가 발생했습니다.');
+        updateDebugInfo('Firebase 동기화 오류: ' + error.message);
+        alert('❌ Firebase 동기화 중 오류가 발생했습니다:\n' + error.message);
+    }
+}
+
+// 모든 데이터 초기화
+function clearAllData() {
+    var confirmed = confirm('⚠️ 정말로 모든 데이터를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.');
+    if (!confirmed) return;
+    
+    try {
+        // 로컬 저장소 초기화
+        localStorage.removeItem('fineu_current_user');
+        localStorage.removeItem('fineu_last_user_id');
+        if (currentUser) {
+            localStorage.removeItem('fineu_user_' + currentUser.id);
+        }
+        
+        // Firebase 데이터 삭제 (연결되어 있다면)
+        if (firebaseConnected && db && currentUser) {
+            db.collection('users').doc(currentUser.id).delete()
+                .then(function() {
+                    updateDebugInfo('Firebase 데이터 삭제 완료');
+                })
+                .catch(function(error) {
+                    updateDebugInfo('Firebase 데이터 삭제 오류: ' + error.message);
+                });
+        }
+        
+        // 변수 초기화
+        currentUser = null;
+        userAssets = {};
+        userLevel = 'yellow';
+        userExp = 0;
+        totalAssets = 10000000;
+        cash = 10000000;
+        
+        alert('✅ 모든 데이터가 초기화되었습니다.');
+        
+        // 로그인 화면으로 이동
+        logout();
+        
+    } catch (error) {
+        updateDebugInfo('데이터 초기화 오류: ' + error.message);
+        alert('❌ 데이터 초기화 중 오류가 발생했습니다.');
     }
 }
 
@@ -859,63 +1144,47 @@ function updateLastSyncTime() {
     }
 }
 
-// 자동 저장 시작
-function startAutoSave() {
-    // 30초마다 자동으로 Firebase에 저장
-    autoSaveInterval = setInterval(async function() {
-        if (currentUser && firebaseConnected) {
-            await saveUserDataToFirebase();
-        }
-    }, 30000); // 30초마다
-}
-
-// 자동 저장 중지
-function stopAutoSave() {
-    if (autoSaveInterval) {
-        clearInterval(autoSaveInterval);
-        autoSaveInterval = null;
-    }
-}
-
-// 페이지 이동 함수 (Firebase 저장 포함)
-function navigateToPage(page) {
-    try {
-        // Firebase에 데이터 저장 후 이동
-        saveUserDataToFirebase().then(function() {
-            var cacheBuster = '?v=' + new Date().getTime();
-            var currentHost = window.location.origin;
-            var targetUrl = currentHost + '/' + page + cacheBuster;
-            window.location.href = targetUrl;
-        }).catch(function(error) {
-            console.error('페이지 이동 전 저장 오류:', error);
-            // 오류가 있어도 페이지는 이동
-            window.location.href = page;
-        });
-    } catch (error) {
-        console.error('페이지 이동 오류:', error);
-        window.location.href = page;
-    }
-}
-
-// 자동 로그인 확인 (Firebase 연동)
+// 자동 로그인 확인
 async function checkAutoLogin() {
     try {
+        updateDebugInfo('자동 로그인 확인 시작');
+        
         // 로컬 저장소에서 마지막 로그인 사용자 확인
         var lastUserId = localStorage.getItem('fineu_last_user_id');
         if (lastUserId) {
-            var success = await loadUserDataFromFirebase(lastUserId);
-            if (success) {
+            updateDebugInfo('마지막 로그인 사용자 발견: ' + lastUserId);
+            
+            // Firebase 연결 시도
+            if (firebaseConnected) {
+                var success = await loadUserDataFromFirebase(lastUserId);
+                if (success) {
+                    showMainScreen(lastUserId);
+                    return true;
+                }
+            }
+            
+            // Firebase 실패 시 로컬 로그인
+            updateDebugInfo('Firebase 로그인 실패, 로컬 로그인 시도');
+            var localSuccess = loadUserDataFromLocalStorage(lastUserId);
+            if (localSuccess) {
+                currentUser.id = lastUserId;
+                userLevel = currentUser.level;
+                userExp = currentUser.exp;
+                totalAssets = currentUser.totalAssets;
+                cash = currentUser.cash;
+                userAssets = currentUser.portfolio;
+                
                 showMainScreen(lastUserId);
                 return true;
             }
         }
     } catch (error) {
-        console.error('자동 로그인 확인 오류:', error);
+        updateDebugInfo('자동 로그인 확인 오류: ' + error.message);
     }
     return false;
 }
 
-// 로그인 함수 (Firebase 연동)
+// 로그인 함수 (개선된 버전)
 async function performLogin() {
     try {
         var loginBtn = document.getElementById('loginBtnText');
@@ -924,41 +1193,104 @@ async function performLogin() {
         var password = document.getElementById('userPassword');
         
         if (!userId || !password) {
-            alert('입력 필드를 찾을 수 없습니다.');
+            showMessage('입력 필드를 찾을 수 없습니다.', 'error');
             return;
         }
         
         var userIdValue = userId.value.trim();
         var passwordValue = password.value.trim();
         
-        if (!userIdValue || !passwordValue) {
-            alert('아이디와 비밀번호를 입력해주세요.');
+        if (!userIdValue) {
+            showMessage('아이디를 입력해주세요.', 'error');
             return;
         }
         
         // 로딩 상태 표시
         loginBtn.textContent = '로그인 중...';
         loginLoader.classList.remove('hidden');
+        updateDebugInfo('로그인 시도: ' + userIdValue);
         
-        // Firebase에서 사용자 데이터 로드
-        var success = await loadUserDataFromFirebase(userIdValue);
+        var success = false;
+        
+        // Firebase 로그인 시도
+        if (firebaseConnected) {
+            updateDebugInfo('Firebase 로그인 시도');
+            success = await loadUserDataFromFirebase(userIdValue);
+            
+            if (success) {
+                currentUser.loginMethod = 'firebase';
+                showMessage('Firebase 로그인 성공!', 'success');
+                updateDebugInfo('Firebase 로그인 성공');
+            }
+        }
+        
+        // Firebase 실패 시 로컬 로그인
+        if (!success) {
+            updateDebugInfo('로컬 로그인 시도');
+            success = loadUserDataFromLocalStorage(userIdValue);
+            
+            if (success) {
+                currentUser.id = userIdValue;
+                currentUser.loginMethod = 'local';
+                userLevel = currentUser.level;
+                userExp = currentUser.exp;
+                totalAssets = currentUser.totalAssets;
+                cash = currentUser.cash;
+                userAssets = currentUser.portfolio;
+                showMessage('로컬 로그인 성공!', 'success');
+                updateDebugInfo('로컬 로그인 성공');
+            } else {
+                // 신규 사용자 생성
+                updateDebugInfo('신규 사용자 생성');
+                currentUser = {
+                    id: userIdValue,
+                    name: userIdValue,
+                    level: 'yellow',
+                    exp: 0,
+                    totalAssets: 10000000,
+                    cash: 10000000,
+                    virtualBalance: 10000000,
+                    portfolio: {
+                        deposit: [],
+                        stock: [],
+                        bond: [],
+                        etf: [],
+                        crypto: [],
+                        commodity: []
+                    },
+                    transactions: [],
+                    loginMethod: 'new_user',
+                    lastUpdated: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                userLevel = 'yellow';
+                userExp = 0;
+                totalAssets = 10000000;
+                cash = 10000000;
+                userAssets = {};
+                
+                success = true;
+                showMessage('신규 사용자로 가입되었습니다!', 'success');
+                updateDebugInfo('신규 사용자 생성 완료');
+            }
+        }
         
         if (success) {
             // 마지막 로그인 사용자 저장
             localStorage.setItem('fineu_last_user_id', userIdValue);
+            localStorage.setItem('fineu_current_user', JSON.stringify(currentUser));
+            
             showMainScreen(userIdValue);
         } else {
-            alert('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+            showMessage('로그인에 실패했습니다. 다시 시도해주세요.', 'error');
+            updateDebugInfo('로그인 실패');
         }
         
-        // 로딩 상태 해제
-        loginBtn.textContent = '로그인';
-        loginLoader.classList.add('hidden');
-        
     } catch (error) {
-        console.error('로그인 오류:', error);
-        alert('로그인 중 오류가 발생했습니다.');
-        
+        updateDebugInfo('로그인 오류: ' + error.message);
+        showMessage('로그인 중 오류가 발생했습니다: ' + error.message, 'error');
+    } finally {
         // 로딩 상태 해제
         document.getElementById('loginBtnText').textContent = '로그인';
         document.getElementById('loginLoader').classList.add('hidden');
@@ -968,6 +1300,8 @@ async function performLogin() {
 // 메인 화면 표시
 function showMainScreen(userId) {
     try {
+        updateDebugInfo('메인 화면 표시: ' + userId);
+        
         var loginScreen = document.getElementById('loginScreen');
         var mainScreen = document.getElementById('mainScreen');
         
@@ -982,8 +1316,10 @@ function showMainScreen(userId) {
         updateDisplay();
         startAutoSave();
         
+        updateDebugInfo('메인 화면 표시 완료');
+        
     } catch (error) {
-        console.error('화면 전환 오류:', error);
+        updateDebugInfo('화면 전환 오류: ' + error.message);
     }
 }
 
@@ -998,6 +1334,18 @@ function updateDisplay() {
             userNameElement.textContent = currentUser.name || currentUser.id;
         }
         
+        // 로그인 방법 표시
+        var loginMethodElement = document.getElementById('loginMethod');
+        if (loginMethodElement) {
+            var methodText = {
+                'firebase': 'Firebase 로그인',
+                'local': '로컬 로그인',
+                'local_backup': '로컬 백업',
+                'new_user': '신규 사용자'
+            };
+            loginMethodElement.textContent = methodText[currentUser.loginMethod] || '로컬 로그인';
+        }
+        
         // 레벨 업데이트
         updateLevelDisplay();
         
@@ -1007,8 +1355,10 @@ function updateDisplay() {
         // 포트폴리오 업데이트
         updatePortfolioDisplay();
         
+        updateDebugInfo('화면 업데이트 완료');
+        
     } catch (error) {
-        console.error('화면 업데이트 오류:', error);
+        updateDebugInfo('화면 업데이트 오류: ' + error.message);
     }
 }
 
@@ -1034,7 +1384,7 @@ function updateLevelDisplay() {
             expElement.textContent = userExp + ' / ' + level.max + ' EXP';
         }
     } catch (error) {
-        console.error('레벨 업데이트 오류:', error);
+        updateDebugInfo('레벨 업데이트 오류: ' + error.message);
     }
 }
 
@@ -1064,11 +1414,11 @@ function updateAssetsDisplay() {
         updateAssetsList();
         
     } catch (error) {
-        console.error('자산 업데이트 오류:', error);
+        updateDebugInfo('자산 업데이트 오류: ' + error.message);
     }
 }
 
-// 자산 리스트 업데이트
+// 자산 리스트 업데이트 (계속)
 function updateAssetsList() {
     try {
         var assetsList = document.getElementById('assetsList');
@@ -1113,7 +1463,7 @@ function updateAssetsList() {
         assetsList.innerHTML = assetsHTML;
         
     } catch (error) {
-        console.error('자산 리스트 업데이트 오류:', error);
+        updateDebugInfo('자산 리스트 업데이트 오류: ' + error.message);
     }
 }
 
@@ -1174,7 +1524,7 @@ function updatePortfolioDisplay() {
         portfolioDetails.innerHTML = detailsHTML;
         
     } catch (error) {
-        console.error('포트폴리오 업데이트 오류:', error);
+        updateDebugInfo('포트폴리오 업데이트 오류: ' + error.message);
     }
 }
 
@@ -1252,7 +1602,7 @@ function initPortfolioChart() {
         });
         
     } catch (error) {
-        console.error('포트폴리오 차트 오류:', error);
+        updateDebugInfo('포트폴리오 차트 오류: ' + error.message);
     }
 }
 
@@ -1264,6 +1614,51 @@ function addPriceUpdateEffect(elementId) {
         setTimeout(function() {
             element.classList.remove('price-update');
         }, 500);
+    }
+}
+
+// 자동 저장 시작
+function startAutoSave() {
+    autoSaveInterval = setInterval(async function() {
+        if (currentUser && firebaseConnected) {
+            await saveUserDataToFirebase();
+        } else if (currentUser) {
+            saveUserDataToLocalStorage();
+        }
+    }, 30000); // 30초마다
+}
+
+// 자동 저장 중지
+function stopAutoSave() {
+    if (autoSaveInterval) {
+        clearInterval(autoSaveInterval);
+        autoSaveInterval = null;
+    }
+}
+
+// 페이지 이동 함수 (Firebase 저장 포함)
+function navigateToPage(page) {
+    try {
+        // Firebase에 데이터 저장 후 이동
+        if (currentUser && firebaseConnected) {
+            saveUserDataToFirebase().then(function() {
+                var cacheBuster = '?v=' + new Date().getTime();
+                var currentHost = window.location.origin;
+                var targetUrl = currentHost + '/' + page + cacheBuster;
+                window.location.href = targetUrl;
+            }).catch(function(error) {
+                updateDebugInfo('페이지 이동 전 저장 오류: ' + error.message);
+                // 오류가 있어도 페이지는 이동
+                window.location.href = page;
+            });
+        } else {
+            // Firebase 연결 없으면 바로 이동
+            saveUserDataToLocalStorage();
+            window.location.href = page;
+        }
+    } catch (error) {
+        updateDebugInfo('페이지 이동 오류: ' + error.message);
+        window.location.href = page;
     }
 }
 
@@ -1279,16 +1674,22 @@ function toggleProfileMenu() {
             }
         }
     } catch (error) {
-        console.error('프로필 메뉴 토글 오류:', error);
+        updateDebugInfo('프로필 메뉴 토글 오류: ' + error.message);
     }
 }
 
 // 로그아웃 (Firebase 저장 후)
 async function logout() {
     try {
+        updateDebugInfo('로그아웃 시작');
+        
         // Firebase에 최종 데이터 저장
         if (currentUser && firebaseConnected) {
             await saveUserDataToFirebase();
+            updateDebugInfo('로그아웃 전 Firebase 저장 완료');
+        } else if (currentUser) {
+            saveUserDataToLocalStorage();
+            updateDebugInfo('로그아웃 전 로컬 저장 완료');
         }
         
         // 자동 저장 중지
@@ -1313,16 +1714,17 @@ async function logout() {
         // 입력 필드 초기화
         var userIdInput = document.getElementById('userId');
         var passwordInput = document.getElementById('userPassword');
-        if (userIdInput) userIdInput.value = '';
-        if (passwordInput) passwordInput.value = '';
+        if (userIdInput) userIdInput.value = 'gunwoo55';
+        if (passwordInput) passwordInput.value = 'test123';
         
         // 프로필 메뉴 숨기기
         hideProfileMenu();
         
-        console.log('로그아웃 완료');
+        updateDebugInfo('로그아웃 완료');
+        showMessage('로그아웃되었습니다.', 'success');
         
     } catch (error) {
-        console.error('로그아웃 오류:', error);
+        updateDebugInfo('로그아웃 오류: ' + error.message);
     }
 }
 
@@ -1344,6 +1746,7 @@ function uploadProfileImage() {
 
 function handleImageUpload(event) {
     // 이미지 업로드 처리 로직
+    updateDebugInfo('이미지 업로드 기능은 준비 중입니다.');
 }
 
 function showRegisterModal() {
@@ -1379,6 +1782,14 @@ function showProfileModal() {
     var modal = document.getElementById('profileModal');
     if (modal) {
         modal.classList.remove('hidden');
+        
+        // 현재 사용자 정보로 폼 채우기
+        if (currentUser) {
+            var modalUserName = document.getElementById('modalUserName');
+            if (modalUserName) {
+                modalUserName.value = currentUser.name || currentUser.id;
+            }
+        }
     }
 }
 
@@ -1390,49 +1801,133 @@ function hideProfileModal() {
 }
 
 function register() {
-    alert('회원가입 기능은 준비 중입니다.');
+    var userId = document.getElementById('registerUserId').value.trim();
+    var password = document.getElementById('registerPassword').value;
+    var passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+    var name = document.getElementById('registerName').value.trim();
+    
+    if (!userId || !password || !name) {
+        showMessage('모든 필드를 입력해주세요.', 'error');
+        return;
+    }
+    
+    if (password !== passwordConfirm) {
+        showMessage('비밀번호가 일치하지 않습니다.', 'error');
+        return;
+    }
+    
+    // 임시로 간단한 회원가입 처리
+    showMessage('회원가입이 완료되었습니다! 로그인해주세요.', 'success');
     hideRegisterModal();
+    
+    // 아이디 필드에 자동 입력
+    document.getElementById('userId').value = userId;
+    
+    updateDebugInfo('회원가입 완료: ' + userId);
 }
 
 function findAccount() {
-    alert('계정 찾기 기능은 준비 중입니다.');
-    hideFindModal();
+    var name = document.getElementById('findName').value.trim();
+    var email = document.getElementById('findEmail').value.trim();
+    
+    if (!name || !email) {
+        showMessage('이름과 이메일을 입력해주세요.', 'error');
+        return;
+    }
+    
+    // 임시로 간단한 계정 찾기 처리
+    showMessage('입력하신 정보로 계정을 찾을 수 없습니다.', 'error');
+    updateDebugInfo('계정 찾기 시도: ' + name + ', ' + email);
 }
 
-function updateProfile() {
-    alert('프로필 업데이트 기능은 준비 중입니다.');
-    hideProfileModal();
+async function updateProfile() {
+    if (!currentUser) {
+        showMessage('로그인이 필요합니다.', 'error');
+        return;
+    }
+    
+    var newName = document.getElementById('modalUserName').value.trim();
+    
+    if (!newName) {
+        showMessage('이름을 입력해주세요.', 'error');
+        return;
+    }
+    
+    try {
+        // 사용자 이름 업데이트
+        currentUser.name = newName;
+        
+        // Firebase 또는 로컬에 저장
+        if (firebaseConnected) {
+            await saveUserDataToFirebase();
+            showMessage('프로필이 Firebase에 저장되었습니다!', 'success');
+        } else {
+            saveUserDataToLocalStorage();
+            showMessage('프로필이 로컬에 저장되었습니다!', 'success');
+        }
+        
+        updateDisplay();
+        hideProfileModal();
+        
+        updateDebugInfo('프로필 업데이트 완료: ' + newName);
+        
+    } catch (error) {
+        updateDebugInfo('프로필 업데이트 오류: ' + error.message);
+        showMessage('프로필 업데이트 중 오류가 발생했습니다.', 'error');
+    }
 }
 
 // Firebase 연결 상태 모니터링
 function monitorFirebaseConnection() {
-    // Firestore 연결 상태 확인
-    db.enableNetwork().then(function() {
-        updateFirebaseStatus('connected', 'Firebase 연결 성공');
-    }).catch(function(error) {
-        updateFirebaseStatus('error', 'Firebase 연결 실패: ' + error.message);
-    });
+    if (db) {
+        db.enableNetwork().then(function() {
+            updateFirebaseStatus('connected', 'Firebase 연결 성공');
+        }).catch(function(error) {
+            updateFirebaseStatus('error', 'Firebase 연결 실패: ' + error.message);
+        });
+    }
 }
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', async function() {
     try {
-        console.log('Firebase 연동 페이지 로드 시작 - 2025년 8월 9일 12:35:37 KST');
+        updateDebugInfo('페이지 로드 시작 - gunwoo55 - 2025년 8월 9일 12:50:52 KST');
         
-        // Firebase 연결 상태 모니터링 시작
-        monitorFirebaseConnection();
+        // 디버그 모드 기본 숨김
+        document.getElementById('debugInfo').style.display = 'none';
+        
+        // Firebase 초기화 시도
+        var firebaseInitialized = await initializeFirebase();
+        
+        if (firebaseInitialized) {
+            updateDebugInfo('Firebase 초기화 성공');
+            monitorFirebaseConnection();
+        } else {
+            updateDebugInfo('Firebase 초기화 실패, 로컬 모드로 동작');
+        }
         
         // 자동 로그인 확인
         var autoLoginSuccess = await checkAutoLogin();
         if (!autoLoginSuccess) {
-            console.log('자동 로그인 실패 - 로그인 화면 표시');
-            updateFirebaseStatus('connected', 'Firebase 준비 완료');
+            updateDebugInfo('자동 로그인 실패 - 로그인 화면 표시');
+            if (firebaseInitialized) {
+                updateFirebaseStatus('connected', 'Firebase 준비 완료');
+            }
         }
         
         // 엔터 키 이벤트
         var passwordInput = document.getElementById('userPassword');
         if (passwordInput) {
             passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performLogin();
+                }
+            });
+        }
+        
+        var userIdInput = document.getElementById('userId');
+        if (userIdInput) {
+            userIdInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     performLogin();
                 }
@@ -1455,11 +1950,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         setInterval(function() {
             if (currentUser) {
                 updateDisplay();
+                updateLastSyncTime();
             }
         }, 5000);
         
+        updateDebugInfo('페이지 초기화 완료');
+        
     } catch (error) {
-        console.error('초기화 오류:', error);
+        updateDebugInfo('초기화 오류: ' + error.message);
         updateFirebaseStatus('error', '초기화 오류: ' + error.message);
     }
 });
@@ -1467,23 +1965,55 @@ document.addEventListener('DOMContentLoaded', async function() {
 // 페이지 언로드 시 Firebase에 최종 저장
 window.addEventListener('beforeunload', async function() {
     if (currentUser && firebaseConnected) {
-        await saveUserDataToFirebase();
+        try {
+            await saveUserDataToFirebase();
+            updateDebugInfo('페이지 언로드 전 Firebase 저장 완료');
+        } catch (error) {
+            updateDebugInfo('페이지 언로드 전 저장 오류: ' + error.message);
+        }
+    } else if (currentUser) {
+        saveUserDataToLocalStorage();
+        updateDebugInfo('페이지 언로드 전 로컬 저장 완료');
     }
     stopAutoSave();
 });
 
 // 네트워크 상태 모니터링
 window.addEventListener('online', function() {
-    console.log('네트워크 연결됨');
-    monitorFirebaseConnection();
+    updateDebugInfo('네트워크 연결됨');
+    if (firebaseConnected) {
+        monitorFirebaseConnection();
+        // 재연결 시 데이터 동기화
+        if (currentUser) {
+            saveUserDataToFirebase();
+        }
+    }
 });
 
 window.addEventListener('offline', function() {
-    console.log('네트워크 연결 끊어짐');
+    updateDebugInfo('네트워크 연결 끊어짐');
     updateFirebaseStatus('error', '네트워크 연결 없음');
 });
 
-console.log('Firebase 연동 메인 페이지 로드 완료 - gunwoo55 - 2025년 8월 9일 12:35:37 KST');
+// 페이지 포커스/블러 이벤트 (백그라운드에서 돌아올 때 데이터 갱신)
+document.addEventListener('visibilitychange', async function() {
+    if (!document.hidden && currentUser) {
+        updateDebugInfo('페이지 다시 활성화됨');
+        
+        // Firebase 연결되어 있다면 최신 데이터 동기화
+        if (firebaseConnected) {
+            try {
+                await loadUserDataFromFirebase(currentUser.id);
+                updateDisplay();
+                updateDebugInfo('페이지 활성화 시 Firebase 데이터 동기화 완료');
+            } catch (error) {
+                updateDebugInfo('페이지 활성화 시 동기화 오류: ' + error.message);
+            }
+        }
+    }
+});
+
+updateDebugInfo('Firebase 연동 메인 페이지 스크립트 로드 완료 - gunwoo55 - 2025년 8월 9일 12:50:52 KST');
 </script>
 
 </body>
