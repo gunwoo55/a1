@@ -9,7 +9,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <title>FINE U - 등급 메뉴 (Realtime Database 연동)</title>
+    <title>FINE U - 등급 메뉴 (포트폴리오 저장 완전 수정)</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -214,6 +214,25 @@
             z-index: 1000;
             display: none;
         }
+
+        .save-indicator {
+            position: fixed;
+            top: 50px;
+            right: 10px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .save-indicator.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -221,6 +240,11 @@
 <!-- Firebase 연결 상태 -->
 <div id="firebaseStatus" class="firebase-status firebase-loading">
     <i class="fas fa-database"></i> 연결 중...
+</div>
+
+<!-- 저장 상태 표시 -->
+<div id="saveIndicator" class="save-indicator">
+    <i class="fas fa-check-circle"></i> 저장 완료
 </div>
 
 <!-- 디버그 패널 -->
@@ -240,7 +264,7 @@
                 <div class="flex items-center justify-center text-xs">
                     <span class="real-time-indicator"></span>
                     <span class="text-green-600 mr-1">REALTIME DB</span>
-                    <span class="text-gray-500" id="currentTime">13:09:10</span>
+                    <span class="text-gray-500" id="currentTime">13:24:46</span>
                     <span class="api-status api-live" id="apiStatus">Realtime DB 연결됨</span>
                     <span id="specialAccountBadge" class="special-account-indicator hidden">⭐ 특별계정</span>
                 </div>
@@ -493,6 +517,13 @@
                         <!-- 포트폴리오 항목들이 여기에 표시됩니다 -->
                     </div>
                 </div>
+                
+                <!-- 디버그 정보 (gunwoo55 전용) -->
+                <div class="mt-4 p-3 bg-gray-100 rounded-lg">
+                    <button onclick="debugPortfolio()" class="text-xs bg-blue-500 text-white px-2 py-1 rounded mr-2">디버그</button>
+                    <button onclick="forceSave()" class="text-xs bg-green-500 text-white px-2 py-1 rounded mr-2">강제저장</button>
+                    <button onclick="reloadData()" class="text-xs bg-orange-500 text-white px-2 py-1 rounded">데이터새로고침</button>
+                </div>
             </div>
         </div>
     </div>
@@ -515,7 +546,7 @@
                     <div class="flex items-center justify-center">
                         <span class="real-time-indicator"></span>
                         <span class="text-sm text-blue-600 font-semibold">시장 데이터 (Realtime DB 동기화)</span>
-                        <span class="text-xs text-gray-500 ml-2" id="marketUpdateTime">13:09:10</span>
+                        <span class="text-xs text-gray-500 ml-2" id="marketUpdateTime">13:24:46</span>
                     </div>
                 </div>
                 
@@ -654,7 +685,7 @@
 </div>
 
 <script>
-// Firebase 설정 - Realtime Database (index.html과 동일)
+// Firebase 설정 - Realtime Database
 const firebaseConfig = {
   apiKey: "AIzaSyApKJHvNXftrzXAZsH41FxqVj0_Byh_V28",
   authDomain: "invest-97aa7.firebaseapp.com",
@@ -673,7 +704,7 @@ if (!firebase.apps.length) {
 const database = firebase.database();
 const auth = firebase.auth();
 
-// 전역 변수 (기존 구조 유지)
+// 전역 변수
 var currentUser = null;
 var firebaseConnected = false;
 var debugMode = false;
@@ -688,7 +719,7 @@ var levelSystem = {
     red: { name: 'RED', exp: 50000, max: 100000, class: 'level-red' }
 };
 
-// 특별 계정 설정 (index.html과 동일)
+// 특별 계정 설정
 var specialAccounts = {
     'test': {
         startLevel: 'black',
@@ -706,7 +737,7 @@ var specialAccounts = {
     }
 };
 
-// 실시간 투자 상품 데이터 (API 기반)
+// 실시간 투자 상품 데이터
 var realTimeInvestmentProducts = {
     deposit: [],
     stock: [],
@@ -740,10 +771,20 @@ function toggleDebug() {
     var debugPanel = document.getElementById('debugPanel');
     if (debugMode) {
         debugPanel.style.display = 'block';
-        updateDebugInfo('디버그 모드 활성화');
+        updateDebugInfo('디버그 모드 활성화 - gunwoo55');
     } else {
         debugPanel.style.display = 'none';
     }
+}
+
+// 저장 상태 표시
+function showSaveIndicator(message) {
+    var indicator = document.getElementById('saveIndicator');
+    indicator.innerHTML = '<i class="fas fa-check-circle"></i> ' + (message || '저장 완료');
+    indicator.classList.add('show');
+    setTimeout(function() {
+        indicator.classList.remove('show');
+    }, 2000);
 }
 
 // Firebase 연결 상태 업데이트
@@ -785,10 +826,9 @@ function updateFirebaseStatus(status, message) {
     }
 }
 
-// Firebase Realtime Database에서 사용자 데이터 로드
+// Firebase Realtime Database에서 사용자 데이터 로드 (완전 수정 버전)
 async function loadUserDataFromFirebase() {
     try {
-        // 로컬 저장소에서 현재 사용자 ID 가져오기
         var lastUserId = localStorage.getItem('fineu_last_user_id');
         if (!lastUserId) {
             updateDebugInfo('로그인된 사용자 없음');
@@ -796,6 +836,7 @@ async function loadUserDataFromFirebase() {
         }
         
         updateFirebaseStatus('loading', 'Realtime Database에서 사용자 데이터 로드 중...');
+        updateDebugInfo('사용자 데이터 로드 시작: ' + lastUserId);
         
         const snapshot = await database.ref('users/' + lastUserId).once('value');
         
@@ -803,6 +844,7 @@ async function loadUserDataFromFirebase() {
             const userData = snapshot.val();
             updateDebugInfo('Realtime Database에서 사용자 데이터 로드 성공: ' + lastUserId);
             
+            // 사용자 데이터 완전 복원
             currentUser = {
                 id: lastUserId,
                 name: userData.name || lastUserId,
@@ -826,7 +868,30 @@ async function loadUserDataFromFirebase() {
                 createdAt: userData.createdAt || new Date().toISOString()
             };
             
+            // 포트폴리오 구조 완전 검증
+            if (!currentUser.portfolio || typeof currentUser.portfolio !== 'object') {
+                currentUser.portfolio = {
+                    deposit: [],
+                    stock: [],
+                    bond: [],
+                    etf: [],
+                    crypto: [],
+                    commodity: []
+                };
+                updateDebugInfo('포트폴리오 구조 초기화됨');
+            }
+            
+            // 각 포트폴리오 타입 배열 보장
+            ['deposit', 'stock', 'bond', 'etf', 'crypto', 'commodity'].forEach(function(type) {
+                if (!Array.isArray(currentUser.portfolio[type])) {
+                    currentUser.portfolio[type] = [];
+                    updateDebugInfo('포트폴리오 타입 ' + type + ' 배열로 초기화');
+                }
+            });
+            
             updateFirebaseStatus('connected', 'Realtime Database 데이터 로드 완료');
+            updateDebugInfo('포트폴리오 로드 완료: ' + JSON.stringify(currentUser.portfolio));
+            
             return true;
         } else {
             updateDebugInfo('Realtime Database에 사용자 데이터 없음');
@@ -844,17 +909,31 @@ async function loadUserDataFromFirebase() {
     }
 }
 
-// Firebase Realtime Database에 사용자 데이터 저장
+// Firebase Realtime Database에 사용자 데이터 저장 (완전 수정 버전)
 async function saveUserDataToFirebase() {
     if (!currentUser || !firebaseConnected || !database) {
-        updateDebugInfo('Realtime Database 연결 없음, 로컬 저장소에만 저장');
+        updateDebugInfo('Firebase 연결 없음, 로컬 저장소에만 저장');
         saveUserDataToLocalStorage();
         return false;
     }
     
     try {
         updateFirebaseStatus('loading', 'Realtime Database에 데이터 저장 중...');
+        updateDebugInfo('Firebase 저장 시작: ' + currentUser.id);
         
+        // 포트폴리오 구조 재검증
+        if (!currentUser.portfolio || typeof currentUser.portfolio !== 'object') {
+            currentUser.portfolio = {
+                deposit: [],
+                stock: [],
+                bond: [],
+                etf: [],
+                crypto: [],
+                commodity: []
+            };
+        }
+        
+        // 저장할 데이터 구성 (완전 덮어쓰기용)
         const saveData = {
             id: currentUser.id,
             name: currentUser.name,
@@ -863,18 +942,29 @@ async function saveUserDataToFirebase() {
             totalAssets: currentUser.totalAssets,
             cash: currentUser.cash,
             virtualBalance: currentUser.virtualBalance,
-            portfolio: currentUser.portfolio,
+            portfolio: {
+                deposit: currentUser.portfolio.deposit || [],
+                stock: currentUser.portfolio.stock || [],
+                bond: currentUser.portfolio.bond || [],
+                etf: currentUser.portfolio.etf || [],
+                crypto: currentUser.portfolio.crypto || [],
+                commodity: currentUser.portfolio.commodity || []
+            },
             transactions: currentUser.transactions || [],
             isSpecialAccount: currentUser.isSpecialAccount || false,
             specialType: currentUser.specialType || null,
-            lastUpdated: new Date().toISOString()
+            lastUpdated: new Date().toISOString(),
+            lastSavedFrom: 'a5-complete-fixed',
+            saveTimestamp: Date.now()
         };
         
-        await database.ref('users/' + currentUser.id).update(saveData);
+        // Firebase에 완전 저장 (set 사용으로 덮어쓰기)
+        await database.ref('users/' + currentUser.id).set(saveData);
         
-        updateDebugInfo('Realtime Database 데이터 저장 완료');
+        updateDebugInfo('Realtime Database 완전 저장 성공 - 포트폴리오: ' + JSON.stringify(currentUser.portfolio));
         updateFirebaseStatus('connected', 'Realtime Database 저장 완료');
         updateLastSyncTime();
+        showSaveIndicator('Firebase 저장 완료');
         
         // 로컬 저장소에도 백업
         saveUserDataToLocalStorage();
@@ -891,6 +981,44 @@ async function saveUserDataToFirebase() {
     }
 }
 
+// 로컬 저장소에 데이터 저장 (완전 수정 버전)
+function saveUserDataToLocalStorage() {
+    try {
+        if (currentUser) {
+            const saveData = {
+                id: currentUser.id,
+                name: currentUser.name,
+                level: currentUser.level,
+                exp: currentUser.exp,
+                totalAssets: currentUser.totalAssets,
+                cash: currentUser.cash,
+                virtualBalance: currentUser.virtualBalance,
+                portfolio: currentUser.portfolio || {
+                    deposit: [],
+                    stock: [],
+                    bond: [],
+                    etf: [],
+                    crypto: [],
+                    commodity: []
+                },
+                transactions: currentUser.transactions || [],
+                isSpecialAccount: currentUser.isSpecialAccount || false,
+                specialType: currentUser.specialType || null,
+                lastUpdated: new Date().toISOString(),
+                lastSavedFrom: 'a5-local-backup'
+            };
+            
+            // 여러 키로 저장하여 데이터 동기화 보장
+            localStorage.setItem('fineu_current_user', JSON.stringify(saveData));
+            localStorage.setItem('fineu_user_' + currentUser.id, JSON.stringify(saveData));
+            
+            updateDebugInfo('로컬 저장소 완전 백업 완료 - 포트폴리오: ' + Object.keys(currentUser.portfolio).length + '개 타입');
+        }
+    } catch (error) {
+        updateDebugInfo('로컬 저장소 저장 오류: ' + error.message);
+    }
+}
+
 // 로컬 저장소에서 데이터 로드 (백업용)
 function loadUserDataFromLocalStorage() {
     try {
@@ -898,6 +1026,18 @@ function loadUserDataFromLocalStorage() {
         if (savedUser) {
             var userData = JSON.parse(savedUser);
             currentUser = userData;
+            
+            // 포트폴리오 구조 검증
+            if (!currentUser.portfolio || typeof currentUser.portfolio !== 'object') {
+                currentUser.portfolio = {
+                    deposit: [],
+                    stock: [],
+                    bond: [],
+                    etf: [],
+                    crypto: [],
+                    commodity: []
+                };
+            }
             
             updateDebugInfo('로컬 저장소에서 백업 데이터 로드: ' + userData.id);
             return true;
@@ -908,16 +1048,247 @@ function loadUserDataFromLocalStorage() {
     return false;
 }
 
-// 로컬 저장소에 데이터 저장 (백업용)
-function saveUserDataToLocalStorage() {
+// 총 자산 계산 및 업데이트 (완전 수정 버전)
+function updateTotalAssets() {
+    if (!currentUser) return;
+    
+    var totalInvestmentValue = 0;
+    
     try {
-        if (currentUser) {
-            localStorage.setItem('fineu_current_user', JSON.stringify(currentUser));
-            updateDebugInfo('로컬 저장소 백업 완료');
-        }
+        // 모든 포트폴리오 자산 가치 계산
+        Object.keys(currentUser.portfolio).forEach(function(type) {
+            if (Array.isArray(currentUser.portfolio[type]) && currentUser.portfolio[type].length > 0) {
+                currentUser.portfolio[type].forEach(function(holding) {
+                    var currentPrice = getRealtimePrice(type, holding.productId);
+                    totalInvestmentValue += holding.quantity * currentPrice;
+                });
+            }
+        });
+        
+        // 총 자산 = 현금 + 투자 자산
+        currentUser.totalAssets = currentUser.virtualBalance + totalInvestmentValue;
+        
+        updateDebugInfo('총 자산 업데이트: 현금 ' + currentUser.virtualBalance.toLocaleString() + '원 + 투자 ' + totalInvestmentValue.toLocaleString() + '원 = ' + currentUser.totalAssets.toLocaleString() + '원');
     } catch (error) {
-        updateDebugInfo('로컬 저장소 저장 오류: ' + error.message);
+        updateDebugInfo('총 자산 계산 오류: ' + error.message);
     }
+}
+
+// Firebase 연동 거래 실행 (완전 수정 버전)
+async function executeTrade() {
+    if (!currentUser) {
+        alert('로그인이 필요합니다.');
+        return;
+    }
+    
+    var quantity = parseInt(document.getElementById('tradeQuantity').value);
+    var product = currentTradeProduct.product;
+    var type = currentTradeProduct.type;
+    var tradeButtonText = document.getElementById('tradeButtonText');
+    var tradeLoader = document.getElementById('tradeLoader');
+    
+    if (!quantity || quantity <= 0) {
+        alert('수량을 입력해주세요.');
+        return;
+    }
+    
+    // 로딩 상태 표시
+    tradeButtonText.textContent = '처리 중...';
+    tradeLoader.classList.remove('hidden');
+    
+    try {
+        var price = type === 'deposit' ? (product.minAmount || 10000) : product.price;
+        var totalAmount = quantity * price;
+        
+        updateDebugInfo('거래 시작: ' + currentTradeType + ' - ' + product.name + ' ' + quantity + '개, 금액: ' + totalAmount.toLocaleString());
+        
+        // 포트폴리오 초기화 확인
+        if (!currentUser.portfolio || typeof currentUser.portfolio !== 'object') {
+            currentUser.portfolio = {
+                deposit: [],
+                stock: [],
+                bond: [],
+                etf: [],
+                crypto: [],
+                commodity: []
+            };
+            updateDebugInfo('포트폴리오 구조 완전 초기화');
+        }
+        
+        // 해당 타입 배열 확인
+        if (!Array.isArray(currentUser.portfolio[type])) {
+            currentUser.portfolio[type] = [];
+            updateDebugInfo('포트폴리오 타입 ' + type + ' 배열 초기화');
+        }
+        
+        if (currentTradeType === 'buy') {
+            // 매수 처리
+            if (currentUser.virtualBalance < totalAmount) {
+                alert('가상 자산이 부족합니다.\n현재 잔액: ' + currentUser.virtualBalance.toLocaleString() + '원\n필요 금액: ' + totalAmount.toLocaleString() + '원');
+                return;
+            }
+            
+            // 가상 자산 차감
+            currentUser.virtualBalance -= totalAmount;
+            currentUser.cash = currentUser.virtualBalance;
+            
+            updateDebugInfo('가상 자산 차감: ' + totalAmount.toLocaleString() + '원, 잔액: ' + currentUser.virtualBalance.toLocaleString() + '원');
+            
+            // 포트폴리오에 추가/업데이트
+            var existingHolding = currentUser.portfolio[type].find(function(h) {
+                return h.productId === product.id;
+            });
+            
+            if (existingHolding) {
+                // 기존 보유 상품 수량 증가
+                var oldQuantity = existingHolding.quantity;
+                var oldAvgPrice = existingHolding.avgPrice;
+                
+                existingHolding.quantity += quantity;
+                existingHolding.avgPrice = ((oldAvgPrice * oldQuantity) + (price * quantity)) / existingHolding.quantity;
+                existingHolding.lastUpdated = new Date().toISOString();
+                
+                updateDebugInfo('기존 보유 상품 업데이트: ' + product.name + ' 총 ' + existingHolding.quantity + '개, 평균단가: ' + existingHolding.avgPrice.toLocaleString());
+            } else {
+                // 새로운 보유 상품 추가
+                var newHolding = {
+                    productId: product.id,
+                    productName: product.name,
+                    productType: product.type,
+                    quantity: quantity,
+                    avgPrice: price,
+                    purchaseDate: new Date().toISOString(),
+                    lastUpdated: new Date().toISOString(),
+                    assetType: type
+                };
+                
+                currentUser.portfolio[type].push(newHolding);
+                updateDebugInfo('새 보유 상품 추가: ' + product.name + ' ' + quantity + '개, 단가: ' + price.toLocaleString());
+            }
+            
+            // 경험치 추가
+            var expGain = Math.floor(totalAmount / 10000) * 10;
+            currentUser.exp += expGain;
+            
+            // 총 자산 업데이트
+            updateTotalAssets();
+            
+            updateDebugInfo('매수 완료: 경험치 +' + expGain + ', 새로운 포트폴리오: ' + JSON.stringify(currentUser.portfolio[type]));
+            
+            // 즉시 Firebase에 저장
+            await saveUserDataToFirebase();
+            
+            // UI 업데이트
+            updateAllDisplays();
+            
+            alert('✅ 매수 완료!\n' + product.name + ' ' + quantity + '개\n투자금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원') + '\n경험치: +' + expGain + '\n\n💾 Realtime Database에 저장되었습니다.');
+            
+        } else {
+            // 매도 처리
+            var holding = getHolding(type, product.id);
+            if (holding < quantity) {
+                alert('보유 수량이 부족합니다.\n보유 수량: ' + holding + '개\n매도 수량: ' + quantity + '개');
+                return;
+            }
+            
+            // 가상 자산 증가
+            currentUser.virtualBalance += totalAmount;
+            currentUser.cash = currentUser.virtualBalance;
+            
+            updateDebugInfo('가상 자산 증가: ' + totalAmount.toLocaleString() + '원, 잔액: ' + currentUser.virtualBalance.toLocaleString() + '원');
+            
+            // 포트폴리오에서 차감
+            var holdingIndex = currentUser.portfolio[type].findIndex(function(h) {
+                return h.productId === product.id;
+            });
+            
+            if (holdingIndex !== -1) {
+                currentUser.portfolio[type][holdingIndex].quantity -= quantity;
+                currentUser.portfolio[type][holdingIndex].lastUpdated = new Date().toISOString();
+                
+                // 수량이 0이 되면 제거
+                if (currentUser.portfolio[type][holdingIndex].quantity <= 0) {
+                    currentUser.portfolio[type].splice(holdingIndex, 1);
+                    updateDebugInfo('보유 상품 완전 매도로 제거: ' + product.name);
+                } else {
+                    updateDebugInfo('보유 상품 일부 매도: ' + product.name + ' 남은 수량 ' + currentUser.portfolio[type][holdingIndex].quantity + '개');
+                }
+            }
+            
+            // 경험치 추가
+            var expGain = Math.floor(totalAmount / 10000) * 5;
+            currentUser.exp += expGain;
+            
+            // 총 자산 업데이트
+            updateTotalAssets();
+            
+            updateDebugInfo('매도 완료: 경험치 +' + expGain + ', 업데이트된 포트폴리오: ' + JSON.stringify(currentUser.portfolio[type]));
+            
+            // 즉시 Firebase에 저장
+            await saveUserDataToFirebase();
+            
+            // UI 업데이트
+            updateAllDisplays();
+            
+            alert('✅ 매도 완료!\n' + product.name + ' ' + quantity + '개\n판매금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원') + '\n경험치: +' + expGain + '\n\n💾 Realtime Database에 저장되었습니다.');
+        }
+        
+              // 모달 닫기
+        hideTradeModal();
+        hideInvestmentModal();
+        
+        // 포트폴리오 모달이 열려있다면 업데이트
+        if (!document.getElementById('portfolioModal').classList.contains('hidden')) {
+            updatePortfolioModal();
+        }
+        
+    } catch (error) {
+        console.error('거래 실행 오류:', error);
+        updateDebugInfo('거래 실행 오류: ' + error.message);
+        alert('❌ 거래 중 오류가 발생했습니다:\n' + error.message);
+    } finally {
+        // 로딩 상태 해제
+        tradeButtonText.textContent = currentTradeType === 'buy' ? '매수하기' : '매도하기';
+        tradeLoader.classList.add('hidden');
+    }
+}
+
+// 모든 화면 요소 업데이트 (완전 수정 버전)
+function updateAllDisplays() {
+    try {
+        updateLevelDisplay();
+        updateHoldingDisplays();
+        updateRealTimeDisplays();
+        updateBudgetSummary();
+        
+        // 인덱스 페이지용 데이터도 로컬 저장소에 저장
+        saveUserDataToLocalStorage();
+        
+        updateDebugInfo('모든 화면 요소 업데이트 완료');
+    } catch (error) {
+        updateDebugInfo('화면 업데이트 오류: ' + error.message);
+    }
+}
+
+// 포트폴리오 모달 업데이트
+function updatePortfolioModal() {
+    updatePortfolioRealTime();
+    createPortfolioChart();
+    updatePortfolioList();
+}
+
+// 보유 수량 조회 (강화된 버전)
+function getHolding(type, productId) {
+    if (!currentUser || !currentUser.portfolio || !Array.isArray(currentUser.portfolio[type])) {
+        return 0;
+    }
+    
+    var holdings = currentUser.portfolio[type];
+    var holding = holdings.find(function(h) { 
+        return h.productId === productId; 
+    });
+    
+    return holding ? holding.quantity : 0;
 }
 
 // 자동 저장 시작
@@ -951,69 +1322,6 @@ function updateLastSyncTime() {
         }
     });
 }
-
-// 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', async function() {
-    updateDebugInfo('Realtime Database 등급 페이지 로드 시작 - gunwoo55 - 2025년 8월 9일 13:09:10 KST');
-    
-    try {
-        // Firebase Realtime Database 연결 확인
-        updateFirebaseStatus('loading', 'Realtime Database 초기화 중...');
-        
-        // 연결 상태 모니터링
-        var connectedRef = database.ref('.info/connected');
-        connectedRef.on('value', function(snapshot) {
-            if (snapshot.val() === true) {
-                updateFirebaseStatus('connected', 'Realtime Database 연결 성공');
-                firebaseConnected = true;
-            } else {
-                updateFirebaseStatus('error', 'Realtime Database 연결 끊어짐');
-                firebaseConnected = false;
-            }
-        });
-        
-        // 사용자 데이터 로드
-        var success = await loadUserDataFromFirebase();
-        if (!success) {
-            // 로컬 데이터라도 로드
-            loadUserDataFromLocalStorage();
-        }
-        
-        if (currentUser) {
-            updateCurrentTime();
-            updateLevelDisplay();
-            updateAssetProducts();
-            loadRealTimeMarketData();
-            updateBudgetSummary();
-            createBudgetChart();
-            updateRecentTransactions();
-            updateHoldingDisplays();
-            startRealTimeUpdates();
-            startAutoSave();
-            
-            // 특별 계정 표시
-            var specialBadge = document.getElementById('specialAccountBadge');
-            if (specialBadge && currentUser.isSpecialAccount) {
-                specialBadge.textContent = '⭐ ' + currentUser.specialType;
-                specialBadge.classList.remove('hidden');
-            }
-            
-            updateFirebaseStatus('connected', 'Realtime Database 초기화 완료');
-        } else {
-            updateFirebaseStatus('error', '사용자 데이터 없음');
-        }
-        
-        // 1초마다 시간 업데이트
-        setInterval(updateCurrentTime, 1000);
-        
-        // 디버그 패널 숨김
-        document.getElementById('debugPanel').style.display = 'none';
-        
-    } catch (error) {
-        updateDebugInfo('초기화 오류: ' + error.message);
-        updateFirebaseStatus('error', '초기화 실패: ' + error.message);
-    }
-});
 
 // 현재 시간 업데이트
 function updateCurrentTime() {
@@ -1203,14 +1511,16 @@ function updatePortfolioRealTime() {
     var totalCurrentValue = 0;
     
     Object.keys(currentUser.portfolio).forEach(function(type) {
-        currentUser.portfolio[type].forEach(function(holding) {
-            var investmentValue = holding.quantity * holding.avgPrice;
-            var currentPrice = getRealtimePrice(type, holding.productId);
-            var currentValue = holding.quantity * currentPrice;
-            
-            totalInvestment += investmentValue;
-            totalCurrentValue += currentValue;
-        });
+        if (Array.isArray(currentUser.portfolio[type])) {
+            currentUser.portfolio[type].forEach(function(holding) {
+                var investmentValue = holding.quantity * holding.avgPrice;
+                var currentPrice = getRealtimePrice(type, holding.productId);
+                var currentValue = holding.quantity * currentPrice;
+                
+                totalInvestment += investmentValue;
+                totalCurrentValue += currentValue;
+            });
+        }
     });
     
     // 총 자산 업데이트
@@ -1220,20 +1530,34 @@ function updatePortfolioRealTime() {
     var totalReturn = totalInvestment > 0 ? ((totalProfit / totalInvestment) * 100) : 0;
     
     // 업데이트
-    document.getElementById('totalInvestment').textContent = totalInvestment.toLocaleString() + '원';
-    document.getElementById('totalProfit').textContent = totalProfit.toLocaleString() + '원';
-    document.getElementById('totalReturn').textContent = totalReturn.toFixed(2) + '%';
+    var totalInvestmentElement = document.getElementById('totalInvestment');
+    var totalProfitElement = document.getElementById('totalProfit');
+    var totalReturnElement = document.getElementById('totalReturn');
+    
+    if (totalInvestmentElement) {
+        totalInvestmentElement.textContent = totalInvestment.toLocaleString() + '원';
+        addPriceUpdateEffect('totalInvestment');
+    }
+    
+    if (totalProfitElement) {
+        totalProfitElement.textContent = totalProfit.toLocaleString() + '원';
+        addPriceUpdateEffect('totalProfit');
+    }
+    
+    if (totalReturnElement) {
+        totalReturnElement.textContent = totalReturn.toFixed(2) + '%';
+        addPriceUpdateEffect('totalReturn');
+    }
     
     // 수익률에 따른 색상 변경
-    var profitElement = document.getElementById('totalProfit');
-    var returnElement = document.getElementById('totalReturn');
-    
-    if (totalProfit >= 0) {
-        profitElement.className = 'text-lg font-bold text-green-600 price-update';
-        returnElement.className = 'text-xl font-bold text-green-600 price-update';
-    } else {
-        profitElement.className = 'text-lg font-bold text-red-600 price-update';
-        returnElement.className = 'text-xl font-bold text-red-600 price-update';
+    if (totalProfitElement && totalReturnElement) {
+        if (totalProfit >= 0) {
+            totalProfitElement.className = 'text-lg font-bold text-green-600 price-update';
+            totalReturnElement.className = 'text-xl font-bold text-green-600 price-update';
+        } else {
+            totalProfitElement.className = 'text-lg font-bold text-red-600 price-update';
+            totalReturnElement.className = 'text-xl font-bold text-red-600 price-update';
+        }
     }
 }
 
@@ -1260,10 +1584,12 @@ function updateHoldingDisplays() {
     
     Object.keys(currentUser.portfolio).forEach(function(type) {
         var totalValue = 0;
-        currentUser.portfolio[type].forEach(function(holding) {
-            var currentPrice = getRealtimePrice(type, holding.productId);
-            totalValue += holding.quantity * currentPrice;
-        });
+        if (Array.isArray(currentUser.portfolio[type])) {
+            currentUser.portfolio[type].forEach(function(holding) {
+                var currentPrice = getRealtimePrice(type, holding.productId);
+                totalValue += holding.quantity * currentPrice;
+            });
+        }
         
         var element = document.getElementById(type + 'Holding');
         if (element) {
@@ -1273,14 +1599,14 @@ function updateHoldingDisplays() {
     });
 }
 
-// 가계부 요약 업데이트 (계속)
+// 가계부 요약 업데이트
 function updateBudgetSummary() {
     if (!currentUser) return;
     
     var totalIncome = 0;
     var totalExpense = 0;
     
-    if (currentUser.transactions) {
+    if (Array.isArray(currentUser.transactions)) {
         currentUser.transactions.forEach(function(transaction) {
             if (transaction.type === 'income') {
                 totalIncome += transaction.amount;
@@ -1306,7 +1632,7 @@ function createBudgetChart() {
     var expenseData = [];
     var categories = {};
     
-    if (currentUser && currentUser.transactions) {
+    if (currentUser && Array.isArray(currentUser.transactions)) {
         currentUser.transactions.forEach(function(transaction) {
             if (!categories[transaction.category]) {
                 categories[transaction.category] = { income: 0, expense: 0 };
@@ -1377,7 +1703,7 @@ function updateRecentTransactions() {
     var container = document.getElementById('recentTransactions');
     container.innerHTML = '';
     
-    if (!currentUser || !currentUser.transactions || currentUser.transactions.length === 0) {
+    if (!currentUser || !Array.isArray(currentUser.transactions) || currentUser.transactions.length === 0) {
         container.innerHTML = '<p class="text-gray-500 text-center py-4">거래 내역이 없습니다</p>';
         return;
     }
@@ -1638,7 +1964,7 @@ function generateRealTimeProductData(type) {
                     id: 'cry3', 
                     name: '리플', 
                     type: '암호화폐', 
-                    price: 0.68 + (Math.random() - 0.5) * 0.1, 
+                    price: Math.round((0.68 + (Math.random() - 0.5) * 0.1) * 100) / 100, 
                     change: (Math.random() - 0.5) * 10,
                     updateTime: currentTime
                 }
@@ -1709,15 +2035,6 @@ function getRequiredLevel(type) {
     };
     
     return requiredLevels[type];
-}
-
-// 보유 수량 조회
-function getHolding(type, productId) {
-    if (!currentUser || !currentUser.portfolio) return 0;
-    
-    var holdings = currentUser.portfolio[type] || [];
-    var holding = holdings.find(function(h) { return h.productId === productId; });
-    return holding ? holding.quantity : 0;
 }
 
 // 거래 모달 열기
@@ -1864,7 +2181,7 @@ function updateTradeAmount() {
     var product = currentTradeProduct.product;
     var type = currentTradeProduct.type;
     
-    var price = type === 'deposit' ? product.minAmount : product.price;
+    var price = type === 'deposit' ? (product.minAmount || 10000) : product.price;
     var amount = quantity * price;
     
     var priceSymbol = type === 'crypto' ? '$' : '₩';
@@ -1872,120 +2189,6 @@ function updateTradeAmount() {
     
     // 업데이트 효과
     addPriceUpdateEffect('tradeAmount');
-}
-
-// Firebase 연동 거래 실행
-async function executeTrade() {
-    if (!currentUser) {
-        alert('로그인이 필요합니다.');
-        return;
-    }
-    
-    var quantity = parseInt(document.getElementById('tradeQuantity').value);
-    var product = currentTradeProduct.product;
-    var type = currentTradeProduct.type;
-    var tradeButtonText = document.getElementById('tradeButtonText');
-    var tradeLoader = document.getElementById('tradeLoader');
-    
-    if (!quantity || quantity <= 0) {
-        alert('수량을 입력해주세요.');
-        return;
-    }
-    
-    // 로딩 상태 표시
-    tradeButtonText.textContent = '처리 중...';
-    tradeLoader.classList.remove('hidden');
-    
-    try {
-        var price = type === 'deposit' ? product.minAmount : product.price;
-        var totalAmount = quantity * price;
-        
-        if (currentTradeType === 'buy') {
-            // 매수
-            if (currentUser.virtualBalance < totalAmount) {
-                alert('가상 자산이 부족합니다.\n현재 잔액: ' + currentUser.virtualBalance.toLocaleString() + '원');
-                return;
-            }
-            
-            // 가상 자산 차감
-            currentUser.virtualBalance -= totalAmount;
-            currentUser.cash = currentUser.virtualBalance;
-            
-            // 포트폴리오에 추가
-            var existingHolding = currentUser.portfolio[type].find(function(h) {
-                return h.productId === product.id;
-            });
-            
-            if (existingHolding) {
-                existingHolding.quantity += quantity;
-                existingHolding.avgPrice = ((existingHolding.avgPrice * (existingHolding.quantity - quantity)) + (price * quantity)) / existingHolding.quantity;
-            } else {
-                currentUser.portfolio[type].push({
-                    productId: product.id,
-                    quantity: quantity,
-                    avgPrice: price,
-                    purchaseDate: new Date().toISOString(),
-                    productName: product.name
-                });
-            }
-            
-            // 경험치 추가
-            currentUser.exp += Math.floor(totalAmount / 10000) * 10;
-            
-            // Realtime Database에 저장
-            await saveUserDataToFirebase();
-            
-            alert('✅ 매수 완료!\n' + product.name + ' ' + quantity + '개\n투자금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원') + '\n\nRealtime Database에 저장되었습니다.');
-            
-        } else {
-            // 매도
-            var holding = getHolding(type, product.id);
-            if (holding < quantity) {
-                alert('보유 수량이 부족합니다.\n보유 수량: ' + holding + '개');
-                return;
-            }
-            
-            // 가상 자산 증가
-            currentUser.virtualBalance += totalAmount;
-            currentUser.cash = currentUser.virtualBalance;
-            
-            // 포트폴리오에서 차감
-            var holdingIndex = currentUser.portfolio[type].findIndex(function(h) {
-                return h.productId === product.id;
-            });
-            
-            if (holdingIndex !== -1) {
-                currentUser.portfolio[type][holdingIndex].quantity -= quantity;
-                
-                // 수량이 0이 되면 제거
-                if (currentUser.portfolio[type][holdingIndex].quantity <= 0) {
-                    currentUser.portfolio[type].splice(holdingIndex, 1);
-                }
-            }
-            
-            // 경험치 추가
-            currentUser.exp += Math.floor(totalAmount / 10000) * 5;
-            
-            // Realtime Database에 저장
-            await saveUserDataToFirebase();
-            
-            alert('✅ 매도 완료!\n' + product.name + ' ' + quantity + '개\n판매금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원') + '\n\nRealtime Database에 저장되었습니다.');
-        }
-        
-        updateLevelDisplay();
-        updateHoldingDisplays();
-        updateRealTimeDisplays();
-        hideTradeModal();
-        hideInvestmentModal();
-        
-    } catch (error) {
-        console.error('거래 실행 오류:', error);
-        alert('❌ 거래 중 오류가 발생했습니다:\n' + error.message);
-    } finally {
-        // 로딩 상태 해제
-        tradeButtonText.textContent = currentTradeType === 'buy' ? '매수하기' : '매도하기';
-        tradeLoader.classList.add('hidden');
-    }
 }
 
 // 포트폴리오 모달 표시
@@ -2009,24 +2212,26 @@ function createPortfolioChart() {
     var colorIndex = 0;
     
     Object.keys(currentUser.portfolio).forEach(function(type) {
-        var typeValue = 0;
-        currentUser.portfolio[type].forEach(function(holding) {
-            var currentPrice = getRealtimePrice(type, holding.productId);
-            typeValue += holding.quantity * currentPrice;
-        });
-        
-        if (typeValue > 0) {
-            var typeNames = {
-                deposit: '예적금',
-                stock: '주식',
-                bond: '채권',
-                etf: 'ETF/펀드',
-                crypto: '암호화폐',
-                commodity: '귀금속/원자재'
-            };
+        if (Array.isArray(currentUser.portfolio[type])) {
+            var typeValue = 0;
+            currentUser.portfolio[type].forEach(function(holding) {
+                var currentPrice = getRealtimePrice(type, holding.productId);
+                typeValue += holding.quantity * currentPrice;
+            });
             
-            labels.push(typeNames[type]);
-            data.push(typeValue);
+            if (typeValue > 0) {
+                var typeNames = {
+                    deposit: '예적금',
+                    stock: '주식',
+                    bond: '채권',
+                    etf: 'ETF/펀드',
+                    crypto: '암호화폐',
+                    commodity: '귀금속/원자재'
+                };
+                
+                labels.push(typeNames[type]);
+                data.push(typeValue);
+            }
         }
     });
     
@@ -2070,36 +2275,38 @@ function updatePortfolioList() {
     var hasHoldings = false;
     
     Object.keys(currentUser.portfolio).forEach(function(type) {
-        currentUser.portfolio[type].forEach(function(holding) {
-            hasHoldings = true;
-            
-            var currentPrice = getRealtimePrice(type, holding.productId);
-            var investmentValue = holding.quantity * holding.avgPrice;
-            var currentValue = holding.quantity * currentPrice;
-            var profit = currentValue - investmentValue;
-            var returnRate = ((profit / investmentValue) * 100);
-            
-            var itemDiv = document.createElement('div');
-            itemDiv.className = 'p-3 bg-gray-50 rounded-lg';
-            
-            var profitClass = profit >= 0 ? 'text-green-600' : 'text-red-600';
-            var profitIcon = profit >= 0 ? '+' : '';
-            
-            itemDiv.innerHTML = 
-                '<div class="flex justify-between items-center">' +
-                '<div>' +
-                '<p class="font-semibold">' + (holding.productName || '상품명 없음') + '</p>' +
-                '<p class="text-sm text-gray-500">' + holding.quantity + '개 보유</p>' +
-                '<p class="text-xs text-gray-400">평균단가: ' + holding.avgPrice.toLocaleString() + '</p>' +
-                '</div>' +
-                '<div class="text-right">' +
-                '<p class="font-bold price-update">' + currentValue.toLocaleString() + '원</p>' +
-                '<p class="text-sm ' + profitClass + ' price-update">' + profitIcon + profit.toLocaleString() + '원 (' + returnRate.toFixed(2) + '%)</p>' +
-                '<p class="text-xs text-gray-400">Realtime DB</p>' +
-                '</div></div>';
-            
-            container.appendChild(itemDiv);
-        });
+        if (Array.isArray(currentUser.portfolio[type])) {
+            currentUser.portfolio[type].forEach(function(holding) {
+                hasHoldings = true;
+                
+                var currentPrice = getRealtimePrice(type, holding.productId);
+                var investmentValue = holding.quantity * holding.avgPrice;
+                var currentValue = holding.quantity * currentPrice;
+                var profit = currentValue - investmentValue;
+                var returnRate = ((profit / investmentValue) * 100);
+                
+                var itemDiv = document.createElement('div');
+                itemDiv.className = 'p-3 bg-gray-50 rounded-lg';
+                
+                var profitClass = profit >= 0 ? 'text-green-600' : 'text-red-600';
+                var profitIcon = profit >= 0 ? '+' : '';
+                
+                itemDiv.innerHTML = 
+                    '<div class="flex justify-between items-center">' +
+                    '<div>' +
+                    '<p class="font-semibold">' + (holding.productName || '상품명 없음') + '</p>' +
+                    '<p class="text-sm text-gray-500">' + holding.quantity + '개 보유</p>' +
+                    '<p class="text-xs text-gray-400">평균단가: ' + holding.avgPrice.toLocaleString() + '</p>' +
+                    '</div>' +
+                    '<div class="text-right">' +
+                    '<p class="font-bold price-update">' + currentValue.toLocaleString() + '원</p>' +
+                    '<p class="text-sm ' + profitClass + ' price-update">' + profitIcon + profit.toLocaleString() + '원 (' + returnRate.toFixed(2) + '%)</p>' +
+                    '<p class="text-xs text-gray-400">Realtime DB</p>' +
+                    '</div></div>';
+                
+                container.appendChild(itemDiv);
+            });
+        }
     });
     
     if (!hasHoldings) {
@@ -2107,7 +2314,7 @@ function updatePortfolioList() {
     }
 }
 
-// Firebase 연동 수입 추가
+// Firebase 연동 수입 추가 (완전 수정 버전)
 async function addIncome() {
     if (!currentUser) {
         alert('로그인이 필요합니다.');
@@ -2130,33 +2337,38 @@ async function addIncome() {
     incomeLoader.classList.remove('hidden');
     
     try {
-        if (!currentUser.transactions) {
+        if (!Array.isArray(currentUser.transactions)) {
             currentUser.transactions = [];
         }
         
-        currentUser.transactions.push({
+        var newTransaction = {
             type: 'income',
             amount: amount,
             category: category,
             memo: memo,
-            date: new Date().toISOString()
-        });
+            date: new Date().toISOString(),
+            id: 'income_' + new Date().getTime()
+        };
         
+        currentUser.transactions.push(newTransaction);
         currentUser.exp += 50;
+        
+        updateDebugInfo('수입 추가: ' + amount.toLocaleString() + '원 (' + category + ')');
         
         // Realtime Database에 저장
         await saveUserDataToFirebase();
         
-        updateLevelDisplay();
-        updateBudgetSummary();
+        // UI 업데이트
+        updateAllDisplays();
         createBudgetChart();
         updateRecentTransactions();
         hideIncomeModal();
         
-        alert('✅ 수입이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+50 EXP)\n\nRealtime Database에 저장되었습니다.');
+        alert('✅ 수입이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+50 EXP)\n\n💾 Realtime Database에 저장되었습니다.');
         
     } catch (error) {
         console.error('수입 추가 오류:', error);
+        updateDebugInfo('수입 추가 오류: ' + error.message);
         alert('❌ 수입 추가 중 오류가 발생했습니다:\n' + error.message);
     } finally {
         // 로딩 상태 해제
@@ -2165,7 +2377,7 @@ async function addIncome() {
     }
 }
 
-// Firebase 연동 지출 추가
+// Firebase 연동 지출 추가 (완전 수정 버전)
 async function addExpense() {
     if (!currentUser) {
         alert('로그인이 필요합니다.');
@@ -2188,33 +2400,38 @@ async function addExpense() {
     expenseLoader.classList.remove('hidden');
     
     try {
-        if (!currentUser.transactions) {
+        if (!Array.isArray(currentUser.transactions)) {
             currentUser.transactions = [];
         }
         
-        currentUser.transactions.push({
+        var newTransaction = {
             type: 'expense',
             amount: amount,
             category: category,
             memo: memo,
-            date: new Date().toISOString()
-        });
+            date: new Date().toISOString(),
+            id: 'expense_' + new Date().getTime()
+        };
         
+        currentUser.transactions.push(newTransaction);
         currentUser.exp += 30;
+        
+        updateDebugInfo('지출 추가: ' + amount.toLocaleString() + '원 (' + category + ')');
         
         // Realtime Database에 저장
         await saveUserDataToFirebase();
         
-        updateLevelDisplay();
-        updateBudgetSummary();
+        // UI 업데이트
+        updateAllDisplays();
         createBudgetChart();
         updateRecentTransactions();
         hideExpenseModal();
         
-        alert('✅ 지출이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+30 EXP)\n\nRealtime Database에 저장되었습니다.');
+        alert('✅ 지출이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+30 EXP)\n\n💾 Realtime Database에 저장되었습니다.');
         
     } catch (error) {
         console.error('지출 추가 오류:', error);
+        updateDebugInfo('지출 추가 오류: ' + error.message);
         alert('❌ 지출 추가 중 오류가 발생했습니다:\n' + error.message);
     } finally {
         // 로딩 상태 해제
@@ -2259,14 +2476,52 @@ function hideTradeModal() {
     currentTradeProduct = null;
 }
 
+// 디버그 함수들 (gunwoo55 전용)
+function debugPortfolio() {
+    if (currentUser) {
+        console.log('=== 포트폴리오 디버그 정보 ===');
+        console.log('사용자 ID:', currentUser.id);
+        console.log('가상 자산:', currentUser.virtualBalance);
+        console.log('총 자산:', currentUser.totalAssets);
+        console.log('포트폴리오:', currentUser.portfolio);
+        console.log('거래 내역:', currentUser.transactions);
+        console.log('==========================');
+        alert('포트폴리오 디버그 정보가 콘솔에 출력되었습니다.');
+    }
+}
+
+async function forceSave() {
+    if (currentUser) {
+        try {
+            await saveUserDataToFirebase();
+            alert('✅ 강제 저장 완료!\n포트폴리오: ' + Object.keys(currentUser.portfolio).reduce(function(total, type) { 
+                return total + (Array.isArray(currentUser.portfolio[type]) ? currentUser.portfolio[type].length : 0); 
+            }, 0) + '개 상품');
+        } catch (error) {
+            alert('❌ 저장 실패: ' + error.message);
+        }
+    }
+}
+
+async function reloadData() {
+    try {
+        await loadUserDataFromFirebase();
+        updateAllDisplays();
+        updatePortfolioModal();
+        alert('✅ 데이터 새로고침 완료!');
+    } catch (error) {
+        alert('❌ 데이터 새로고침 실패: ' + error.message);
+    }
+}
+
 // 페이지 이동 함수 (Firebase 저장 포함)
 async function goToIndex() {
     if (currentUser && firebaseConnected) {
         try {
             await saveUserDataToFirebase();
-            console.log('페이지 이동 전 Realtime Database 저장 완료');
+            updateDebugInfo('페이지 이동 전 Realtime Database 저장 완료');
         } catch (error) {
-            console.error('페이지 이동 전 저장 오류:', error);
+            updateDebugInfo('페이지 이동 전 저장 오류: ' + error.message);
         }
     }
     
@@ -2297,11 +2552,86 @@ document.addEventListener('keydown', function(e) {
     // Ctrl + S: 수동 저장
     if (e.ctrlKey && e.key === 's') {
         e.preventDefault();
-        if (currentUser && firebaseConnected) {
-            saveUserDataToFirebase().then(function() {
-                alert('Realtime Database에 수동 저장 완료!');
-            });
+        forceSave();
+    }
+    
+    // Ctrl + P: 포트폴리오 정보 로그
+    if (e.ctrlKey && e.key === 'p') {
+        e.preventDefault();
+        debugPortfolio();
+    }
+    
+    // Ctrl + R: 데이터 새로고침
+    if (e.ctrlKey && e.key === 'r') {
+        e.preventDefault();
+        reloadData();
+    }
+});
+
+// 페이지 로드 시 완전 초기화 (최종 수정 버전)
+document.addEventListener('DOMContentLoaded', async function() {
+    updateDebugInfo('포트폴리오 완전 수정 버전 로드 시작 - gunwoo55 - 2025년 8월 9일 13:28:49 KST');
+    
+    try {
+        // Firebase Realtime Database 연결 확인
+        updateFirebaseStatus('loading', 'Realtime Database 초기화 중...');
+        
+        // 연결 상태 모니터링
+        var connectedRef = database.ref('.info/connected');
+        connectedRef.on('value', function(snapshot) {
+            if (snapshot.val() === true) {
+                updateFirebaseStatus('connected', 'Realtime Database 연결 성공');
+                firebaseConnected = true;
+            } else {
+                updateFirebaseStatus('error', 'Realtime Database 연결 끊어짐');
+                firebaseConnected = false;
+            }
+        });
+        
+        // 사용자 데이터 로드
+        var success = await loadUserDataFromFirebase();
+        if (!success) {
+            // 로컬 데이터라도 로드
+            loadUserDataFromLocalStorage();
         }
+        
+        if (currentUser) {
+            updateCurrentTime();
+            updateLevelDisplay();
+            updateAssetProducts();
+            loadRealTimeMarketData();
+            updateBudgetSummary();
+            createBudgetChart();
+            updateRecentTransactions();
+            updateHoldingDisplays();
+            updateTotalAssets(); // 총 자산 계산
+            startRealTimeUpdates();
+            startAutoSave();
+            
+            // 특별 계정 표시
+            var specialBadge = document.getElementById('specialAccountBadge');
+            if (specialBadge && currentUser.isSpecialAccount) {
+                specialBadge.textContent = '⭐ ' + currentUser.specialType;
+                specialBadge.classList.remove('hidden');
+            }
+            
+            updateFirebaseStatus('connected', 'Realtime Database 초기화 완료');
+            updateDebugInfo('포트폴리오 완전 초기화 완료 - 보유 상품: ' + Object.keys(currentUser.portfolio).reduce(function(total, type) { 
+                return total + (Array.isArray(currentUser.portfolio[type]) ? currentUser.portfolio[type].length : 0); 
+            }, 0) + '개');
+        } else {
+            updateFirebaseStatus('error', '사용자 데이터 없음');
+        }
+        
+        // 1초마다 시간 업데이트
+        setInterval(updateCurrentTime, 1000);
+        
+        // 디버그 패널 숨김
+        document.getElementById('debugPanel').style.display = 'none';
+        
+    } catch (error) {
+        updateDebugInfo('초기화 오류: ' + error.message);
+        updateFirebaseStatus('error', '초기화 실패: ' + error.message);
     }
 });
 
@@ -2319,9 +2649,9 @@ window.addEventListener('beforeunload', async function() {
     if (currentUser && firebaseConnected) {
         try {
             await saveUserDataToFirebase();
-            console.log('페이지 언로드 전 Realtime Database 저장 완료');
+            updateDebugInfo('페이지 언로드 전 Realtime Database 저장 완료');
         } catch (error) {
-            console.error('페이지 언로드 전 저장 오류:', error);
+            updateDebugInfo('페이지 언로드 전 저장 오류: ' + error.message);
         }
     }
 });
@@ -2338,14 +2668,14 @@ document.addEventListener('visibilitychange', async function() {
             createBudgetChart();
             updateRecentTransactions();
             updateRealTimeDisplays();
-            console.log('페이지 활성화 시 Realtime Database 데이터 동기화 완료');
+            updateDebugInfo('페이지 활성화 시 Realtime Database 데이터 동기화 완료');
         } catch (error) {
-            console.error('페이지 활성화 시 동기화 오류:', error);
+            updateDebugInfo('페이지 활성화 시 동기화 오류: ' + error.message);
         }
     }
 });
 
-console.log('Firebase Realtime Database 연동 등급 페이지 로드 완료 - gunwoo55 - 2025년 8월 9일 13:13:19 KST');
+updateDebugInfo('Firebase Realtime Database 연동 등급 페이지 완전 수정 버전 로드 완료 - gunwoo55 - 2025년 8월 9일 13:28:49 KST');
 </script>
 
 </body>
