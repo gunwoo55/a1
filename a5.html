@@ -9,14 +9,14 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <title>FINE U - 등급 메뉴 (Firebase 연동)</title>
+    <title>FINE U - 등급 메뉴 (Realtime Database 연동)</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK - Realtime Database -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     
     <style>
@@ -190,6 +190,30 @@
         .firebase-loading {
             background-color: #F59E0B;
         }
+
+        .special-account-indicator {
+            background: linear-gradient(135deg, #374151, #111827);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 10px;
+            max-width: 300px;
+            z-index: 1000;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -197,6 +221,11 @@
 <!-- Firebase 연결 상태 -->
 <div id="firebaseStatus" class="firebase-status firebase-loading">
     <i class="fas fa-database"></i> 연결 중...
+</div>
+
+<!-- 디버그 패널 -->
+<div id="debugPanel" class="debug-panel">
+    Firebase Realtime Database 초기화 중...
 </div>
 
 <div class="min-h-screen bg-gray-100">
@@ -210,9 +239,10 @@
                 <h1 class="text-xl font-bold">등급 메뉴</h1>
                 <div class="flex items-center justify-center text-xs">
                     <span class="real-time-indicator"></span>
-                    <span class="text-green-600 mr-1">LIVE</span>
-                    <span class="text-gray-500" id="currentTime">12:39:26</span>
-                    <span class="api-status api-live" id="apiStatus">Firebase 연결됨</span>
+                    <span class="text-green-600 mr-1">REALTIME DB</span>
+                    <span class="text-gray-500" id="currentTime">13:09:10</span>
+                    <span class="api-status api-live" id="apiStatus">Realtime DB 연결됨</span>
+                    <span id="specialAccountBadge" class="special-account-indicator hidden">⭐ 특별계정</span>
                 </div>
             </div>
             <button onclick="showPortfolioModal()" class="text-blue-600">
@@ -246,7 +276,7 @@
                     <span class="font-bold text-blue-600 price-update" id="virtualBalance">1,000,000원</span>
                 </div>
                 <div class="flex justify-between text-xs mt-1">
-                    <span class="text-gray-500">Firebase 동기화</span>
+                    <span class="text-gray-500">Realtime DB 동기화</span>
                     <span class="text-gray-500" id="lastUpdate">방금 전</span>
                 </div>
             </div>
@@ -447,7 +477,7 @@
                         <p class="text-xl font-bold price-update" id="totalReturn">0%</p>
                     </div>
                     <div class="text-center mt-2">
-                        <p class="text-xs text-gray-500">Firebase 동기화: <span id="portfolioLastUpdate">방금 전</span></p>
+                        <p class="text-xs text-gray-500">Realtime DB 동기화: <span id="portfolioLastUpdate">방금 전</span></p>
                     </div>
                 </div>
                 
@@ -484,8 +514,8 @@
                 <div class="bg-blue-50 rounded-lg p-3 mb-4">
                     <div class="flex items-center justify-center">
                         <span class="real-time-indicator"></span>
-                        <span class="text-sm text-blue-600 font-semibold">시장 데이터 (Firebase 동기화)</span>
-                        <span class="text-xs text-gray-500 ml-2" id="marketUpdateTime">12:39:26</span>
+                        <span class="text-sm text-blue-600 font-semibold">시장 데이터 (Realtime DB 동기화)</span>
+                        <span class="text-xs text-gray-500 ml-2" id="marketUpdateTime">13:09:10</span>
                     </div>
                 </div>
                 
@@ -517,7 +547,7 @@
                         <p class="text-sm text-gray-600" id="tradeProductType"></p>
                         <p class="text-xl font-bold mt-2 price-update" id="tradeProductPrice"></p>
                         <p class="text-sm price-update" id="tradeProductChange"></p>
-                        <p class="text-xs text-gray-500 mt-1">Firebase 연동: <span id="tradeUpdateTime">방금 전</span></p>
+                        <p class="text-xs text-gray-500 mt-1">Realtime DB 연동: <span id="tradeUpdateTime">방금 전</span></p>
                     </div>
                 </div>
                 
@@ -624,10 +654,11 @@
 </div>
 
 <script>
-// Firebase 설정
+// Firebase 설정 - Realtime Database (index.html과 동일)
 const firebaseConfig = {
   apiKey: "AIzaSyApKJHvNXftrzXAZsH41FxqVj0_Byh_V28",
   authDomain: "invest-97aa7.firebaseapp.com",
+  databaseURL: "https://invest-97aa7-default-rtdb.firebaseio.com",
   projectId: "invest-97aa7",
   storageBucket: "invest-97aa7.firebasestorage.app",
   messagingSenderId: "136719207030",
@@ -636,16 +667,16 @@ const firebaseConfig = {
 };
 
 // Firebase 초기화
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const database = firebase.database();
 const auth = firebase.auth();
-
-// 캐시 무력화를 위한 버전 관리
-var APP_VERSION = new Date().getTime();
 
 // 전역 변수 (기존 구조 유지)
 var currentUser = null;
 var firebaseConnected = false;
+var debugMode = false;
 
 var levelSystem = {
     yellow: { name: 'YELLOW', exp: 0, max: 3000, class: 'level-yellow' },
@@ -655,6 +686,24 @@ var levelSystem = {
     brown: { name: 'BROWN', exp: 15000, max: 25000, class: 'level-brown' },
     black: { name: 'BLACK', exp: 25000, max: 50000, class: 'level-black' },
     red: { name: 'RED', exp: 50000, max: 100000, class: 'level-red' }
+};
+
+// 특별 계정 설정 (index.html과 동일)
+var specialAccounts = {
+    'test': {
+        startLevel: 'black',
+        startExp: 25000,
+        startAssets: 50000000,
+        startCash: 50000000,
+        description: '블랙 등급 시작, 5천만원 자산'
+    },
+    'gunwoo55': {
+        startLevel: 'yellow',
+        startExp: 0,
+        startAssets: 10000000,
+        startCash: 10000000,
+        description: '일반 계정'
+    }
 };
 
 // 실시간 투자 상품 데이터 (API 기반)
@@ -675,6 +724,28 @@ var priceUpdateInterval = null;
 var apiUpdateInterval = null;
 var autoSaveInterval = null;
 
+// 디버그 함수
+function updateDebugInfo(message) {
+    if (debugMode) {
+        var debugPanel = document.getElementById('debugPanel');
+        var timestamp = new Date().toLocaleTimeString();
+        debugPanel.innerHTML = '[' + timestamp + '] ' + message;
+        debugPanel.style.display = 'block';
+    }
+    console.log('[DEBUG]', message);
+}
+
+function toggleDebug() {
+    debugMode = !debugMode;
+    var debugPanel = document.getElementById('debugPanel');
+    if (debugMode) {
+        debugPanel.style.display = 'block';
+        updateDebugInfo('디버그 모드 활성화');
+    } else {
+        debugPanel.style.display = 'none';
+    }
+}
+
 // Firebase 연결 상태 업데이트
 function updateFirebaseStatus(status, message) {
     var statusElement = document.getElementById('firebaseStatus');
@@ -686,7 +757,7 @@ function updateFirebaseStatus(status, message) {
             statusElement.innerHTML = '<i class="fas fa-database"></i> 연결됨';
             if (apiStatusElement) {
                 apiStatusElement.className = 'api-status api-live';
-                apiStatusElement.textContent = 'Firebase 연결됨';
+                apiStatusElement.textContent = 'Realtime DB 연결됨';
             }
             firebaseConnected = true;
             break;
@@ -695,7 +766,7 @@ function updateFirebaseStatus(status, message) {
             statusElement.innerHTML = '<i class="fas fa-database"></i> 오류';
             if (apiStatusElement) {
                 apiStatusElement.className = 'api-status api-error';
-                apiStatusElement.textContent = 'Firebase 오류';
+                apiStatusElement.textContent = 'Realtime DB 오류';
             }
             firebaseConnected = false;
             break;
@@ -710,27 +781,27 @@ function updateFirebaseStatus(status, message) {
     }
     
     if (message) {
-        console.log('Firebase 상태:', message);
+        updateDebugInfo('Firebase: ' + message);
     }
 }
 
-// Firebase에서 사용자 데이터 로드
+// Firebase Realtime Database에서 사용자 데이터 로드
 async function loadUserDataFromFirebase() {
     try {
         // 로컬 저장소에서 현재 사용자 ID 가져오기
         var lastUserId = localStorage.getItem('fineu_last_user_id');
         if (!lastUserId) {
-            console.log('로그인된 사용자 없음');
+            updateDebugInfo('로그인된 사용자 없음');
             return false;
         }
         
-        updateFirebaseStatus('loading', 'Firebase에서 사용자 데이터 로드 중...');
+        updateFirebaseStatus('loading', 'Realtime Database에서 사용자 데이터 로드 중...');
         
-        const userDoc = await db.collection('users').doc(lastUserId).get();
+        const snapshot = await database.ref('users/' + lastUserId).once('value');
         
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-            console.log('Firebase에서 사용자 데이터 로드 성공:', userData);
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            updateDebugInfo('Realtime Database에서 사용자 데이터 로드 성공: ' + lastUserId);
             
             currentUser = {
                 id: lastUserId,
@@ -749,21 +820,23 @@ async function loadUserDataFromFirebase() {
                     commodity: []
                 },
                 transactions: userData.transactions || [],
+                isSpecialAccount: userData.isSpecialAccount || false,
+                specialType: userData.specialType || null,
                 lastUpdated: userData.lastUpdated || new Date().toISOString(),
                 createdAt: userData.createdAt || new Date().toISOString()
             };
             
-            updateFirebaseStatus('connected', 'Firebase 데이터 로드 완료');
+            updateFirebaseStatus('connected', 'Realtime Database 데이터 로드 완료');
             return true;
         } else {
-            console.log('Firebase에 사용자 데이터 없음');
+            updateDebugInfo('Realtime Database에 사용자 데이터 없음');
             updateFirebaseStatus('error', '사용자 데이터 없음');
             return false;
         }
         
     } catch (error) {
-        console.error('Firebase 데이터 로드 오류:', error);
-        updateFirebaseStatus('error', 'Firebase 연결 오류: ' + error.message);
+        updateDebugInfo('Realtime Database 데이터 로드 오류: ' + error.message);
+        updateFirebaseStatus('error', 'Realtime Database 연결 오류: ' + error.message);
         
         // 로컬 저장소에서 백업 데이터 로드
         loadUserDataFromLocalStorage();
@@ -771,16 +844,16 @@ async function loadUserDataFromFirebase() {
     }
 }
 
-// Firebase에 사용자 데이터 저장
+// Firebase Realtime Database에 사용자 데이터 저장
 async function saveUserDataToFirebase() {
-    if (!currentUser || !firebaseConnected) {
-        console.log('Firebase 연결 없음, 로컬 저장소에만 저장');
+    if (!currentUser || !firebaseConnected || !database) {
+        updateDebugInfo('Realtime Database 연결 없음, 로컬 저장소에만 저장');
         saveUserDataToLocalStorage();
         return false;
     }
     
     try {
-        updateFirebaseStatus('loading', 'Firebase에 데이터 저장 중...');
+        updateFirebaseStatus('loading', 'Realtime Database에 데이터 저장 중...');
         
         const saveData = {
             id: currentUser.id,
@@ -792,13 +865,15 @@ async function saveUserDataToFirebase() {
             virtualBalance: currentUser.virtualBalance,
             portfolio: currentUser.portfolio,
             transactions: currentUser.transactions || [],
+            isSpecialAccount: currentUser.isSpecialAccount || false,
+            specialType: currentUser.specialType || null,
             lastUpdated: new Date().toISOString()
         };
         
-        await db.collection('users').doc(currentUser.id).update(saveData);
+        await database.ref('users/' + currentUser.id).update(saveData);
         
-        console.log('Firebase 데이터 저장 완료:', saveData);
-        updateFirebaseStatus('connected', 'Firebase 저장 완료');
+        updateDebugInfo('Realtime Database 데이터 저장 완료');
+        updateFirebaseStatus('connected', 'Realtime Database 저장 완료');
         updateLastSyncTime();
         
         // 로컬 저장소에도 백업
@@ -807,8 +882,8 @@ async function saveUserDataToFirebase() {
         return true;
         
     } catch (error) {
-        console.error('Firebase 데이터 저장 오류:', error);
-        updateFirebaseStatus('error', 'Firebase 저장 실패: ' + error.message);
+        updateDebugInfo('Realtime Database 데이터 저장 오류: ' + error.message);
+        updateFirebaseStatus('error', 'Realtime Database 저장 실패: ' + error.message);
         
         // 로컬 저장소에라도 저장
         saveUserDataToLocalStorage();
@@ -824,11 +899,11 @@ function loadUserDataFromLocalStorage() {
             var userData = JSON.parse(savedUser);
             currentUser = userData;
             
-            console.log('로컬 저장소에서 백업 데이터 로드:', userData);
+            updateDebugInfo('로컬 저장소에서 백업 데이터 로드: ' + userData.id);
             return true;
         }
     } catch (error) {
-        console.error('로컬 저장소 데이터 로드 오류:', error);
+        updateDebugInfo('로컬 저장소 데이터 로드 오류: ' + error.message);
     }
     return false;
 }
@@ -838,10 +913,10 @@ function saveUserDataToLocalStorage() {
     try {
         if (currentUser) {
             localStorage.setItem('fineu_current_user', JSON.stringify(currentUser));
-            console.log('로컬 저장소 백업 완료');
+            updateDebugInfo('로컬 저장소 백업 완료');
         }
     } catch (error) {
-        console.error('로컬 저장소 저장 오류:', error);
+        updateDebugInfo('로컬 저장소 저장 오류: ' + error.message);
     }
 }
 
@@ -879,11 +954,23 @@ function updateLastSyncTime() {
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Firebase 연동 등급 페이지 로드 시작 - 2025년 8월 9일 12:39:26 KST');
+    updateDebugInfo('Realtime Database 등급 페이지 로드 시작 - gunwoo55 - 2025년 8월 9일 13:09:10 KST');
     
     try {
-        // Firebase 연결 확인
-        updateFirebaseStatus('loading', 'Firebase 초기화 중...');
+        // Firebase Realtime Database 연결 확인
+        updateFirebaseStatus('loading', 'Realtime Database 초기화 중...');
+        
+        // 연결 상태 모니터링
+        var connectedRef = database.ref('.info/connected');
+        connectedRef.on('value', function(snapshot) {
+            if (snapshot.val() === true) {
+                updateFirebaseStatus('connected', 'Realtime Database 연결 성공');
+                firebaseConnected = true;
+            } else {
+                updateFirebaseStatus('error', 'Realtime Database 연결 끊어짐');
+                firebaseConnected = false;
+            }
+        });
         
         // 사용자 데이터 로드
         var success = await loadUserDataFromFirebase();
@@ -904,7 +991,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             startRealTimeUpdates();
             startAutoSave();
             
-            updateFirebaseStatus('connected', 'Firebase 초기화 완료');
+            // 특별 계정 표시
+            var specialBadge = document.getElementById('specialAccountBadge');
+            if (specialBadge && currentUser.isSpecialAccount) {
+                specialBadge.textContent = '⭐ ' + currentUser.specialType;
+                specialBadge.classList.remove('hidden');
+            }
+            
+            updateFirebaseStatus('connected', 'Realtime Database 초기화 완료');
         } else {
             updateFirebaseStatus('error', '사용자 데이터 없음');
         }
@@ -912,8 +1006,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         // 1초마다 시간 업데이트
         setInterval(updateCurrentTime, 1000);
         
+        // 디버그 패널 숨김
+        document.getElementById('debugPanel').style.display = 'none';
+        
     } catch (error) {
-        console.error('초기화 오류:', error);
+        updateDebugInfo('초기화 오류: ' + error.message);
         updateFirebaseStatus('error', '초기화 실패: ' + error.message);
     }
 });
@@ -1017,7 +1114,7 @@ async function loadRealTimeMarketData() {
         updateRealTimeDisplays();
         
     } catch (error) {
-        console.error('시장 데이터 로드 오류:', error);
+        updateDebugInfo('시장 데이터 로드 오류: ' + error.message);
         loadFallbackMarketData();
     }
 }
@@ -1078,7 +1175,7 @@ function updateRealTimeDisplays() {
     // 포트폴리오 업데이트
     updatePortfolioRealTime();
     
-    // Firebase에 저장 (비동기)
+    // Realtime Database에 저장 (비동기)
     if (firebaseConnected) {
         saveUserDataToFirebase();
     }
@@ -1176,7 +1273,7 @@ function updateHoldingDisplays() {
     });
 }
 
-// 가계부 요약 업데이트
+// 가계부 요약 업데이트 (계속)
 function updateBudgetSummary() {
     if (!currentUser) return;
     
@@ -1196,21 +1293,20 @@ function updateBudgetSummary() {
     document.getElementById('totalIncome').textContent = totalIncome.toLocaleString() + '원';
     document.getElementById('totalExpense').textContent = totalExpense.toLocaleString() + '원';
     
+    // 가격 업데이트 효과
     addPriceUpdateEffect('totalIncome');
     addPriceUpdateEffect('totalExpense');
 }
 
 // 가계부 차트 생성
 function createBudgetChart() {
-    if (!currentUser) return;
-    
     var ctx = document.getElementById('budgetChart').getContext('2d');
     
     var incomeData = [];
     var expenseData = [];
     var categories = {};
     
-    if (currentUser.transactions) {
+    if (currentUser && currentUser.transactions) {
         currentUser.transactions.forEach(function(transaction) {
             if (!categories[transaction.category]) {
                 categories[transaction.category] = { income: 0, expense: 0 };
@@ -1278,12 +1374,10 @@ function createBudgetChart() {
 
 // 최근 거래 내역 업데이트
 function updateRecentTransactions() {
-    if (!currentUser) return;
-    
     var container = document.getElementById('recentTransactions');
     container.innerHTML = '';
     
-    if (!currentUser.transactions || currentUser.transactions.length === 0) {
+    if (!currentUser || !currentUser.transactions || currentUser.transactions.length === 0) {
         container.innerHTML = '<p class="text-gray-500 text-center py-4">거래 내역이 없습니다</p>';
         return;
     }
@@ -1310,7 +1404,7 @@ function updateRecentTransactions() {
     });
 }
 
-// 투자 모달 열기 (계속)
+// 투자 모달 열기
 function openInvestmentModal(type) {
     // 등급 제한 확인
     if (isProductLocked(type)) {
@@ -1333,7 +1427,7 @@ function openInvestmentModal(type) {
     };
     
     title.textContent = typeNames[type];
-    productList.innerHTML = '<div class="text-center py-4"><div class="inline-block w-6 h-6 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div><p class="text-gray-500 mt-2">Firebase에서 데이터 로딩 중...</p></div>';
+    productList.innerHTML = '<div class="text-center py-4"><div class="inline-block w-6 h-6 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div><p class="text-gray-500 mt-2">Realtime DB에서 데이터 로딩 중...</p></div>';
     
     modal.classList.remove('hidden');
     
@@ -1378,7 +1472,7 @@ function loadRealTimeProducts(type, container) {
         productsHTML += '<div class="text-right">';
         productsHTML += '<p class="font-bold price-update">' + priceDisplay + '</p>';
         productsHTML += changeDisplay;
-        productsHTML += '<p class="text-xs text-gray-400">Firebase 연동</p>';
+        productsHTML += '<p class="text-xs text-gray-400">Realtime DB 연동</p>';
         productsHTML += '</div></div></div>';
     });
     
@@ -1685,9 +1779,6 @@ function openTradeModal(type, productIndex) {
     
     modal.classList.remove('hidden');
     
-    // 수량 변경 이벤트 리스너
-    quantityInput.oninput = updateTradeAmount;
-    
     // 가격 업데이트 시작
     startRealTimePriceUpdate();
 }
@@ -1729,6 +1820,9 @@ function startRealTimePriceUpdate() {
         
         // 가격 업데이트 효과
         addPriceUpdateEffect('tradeProductPrice');
+        
+        // 시간 업데이트
+        updateLastSyncTime();
         
     }, 5000); // 5초마다 업데이트
 }
@@ -1838,10 +1932,10 @@ async function executeTrade() {
             // 경험치 추가
             currentUser.exp += Math.floor(totalAmount / 10000) * 10;
             
-            // Firebase에 저장
+            // Realtime Database에 저장
             await saveUserDataToFirebase();
             
-            alert('✅ 매수 완료!\n' + product.name + ' ' + quantity + '개\n투자금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원') + '\n\nFirebase에 저장되었습니다.');
+            alert('✅ 매수 완료!\n' + product.name + ' ' + quantity + '개\n투자금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원') + '\n\nRealtime Database에 저장되었습니다.');
             
         } else {
             // 매도
@@ -1872,10 +1966,10 @@ async function executeTrade() {
             // 경험치 추가
             currentUser.exp += Math.floor(totalAmount / 10000) * 5;
             
-            // Firebase에 저장
+            // Realtime Database에 저장
             await saveUserDataToFirebase();
             
-            alert('✅ 매도 완료!\n' + product.name + ' ' + quantity + '개\n판매금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원') + '\n\nFirebase에 저장되었습니다.');
+            alert('✅ 매도 완료!\n' + product.name + ' ' + quantity + '개\n판매금액: ' + totalAmount.toLocaleString() + (type === 'crypto' ? '$' : '원') + '\n\nRealtime Database에 저장되었습니다.');
         }
         
         updateLevelDisplay();
@@ -2001,7 +2095,7 @@ function updatePortfolioList() {
                 '<div class="text-right">' +
                 '<p class="font-bold price-update">' + currentValue.toLocaleString() + '원</p>' +
                 '<p class="text-sm ' + profitClass + ' price-update">' + profitIcon + profit.toLocaleString() + '원 (' + returnRate.toFixed(2) + '%)</p>' +
-                '<p class="text-xs text-gray-400">Firebase 동기화</p>' +
+                '<p class="text-xs text-gray-400">Realtime DB</p>' +
                 '</div></div>';
             
             container.appendChild(itemDiv);
@@ -2050,7 +2144,7 @@ async function addIncome() {
         
         currentUser.exp += 50;
         
-        // Firebase에 저장
+        // Realtime Database에 저장
         await saveUserDataToFirebase();
         
         updateLevelDisplay();
@@ -2059,7 +2153,7 @@ async function addIncome() {
         updateRecentTransactions();
         hideIncomeModal();
         
-        alert('✅ 수입이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+50 EXP)\n\nFirebase에 저장되었습니다.');
+        alert('✅ 수입이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+50 EXP)\n\nRealtime Database에 저장되었습니다.');
         
     } catch (error) {
         console.error('수입 추가 오류:', error);
@@ -2108,7 +2202,7 @@ async function addExpense() {
         
         currentUser.exp += 30;
         
-        // Firebase에 저장
+        // Realtime Database에 저장
         await saveUserDataToFirebase();
         
         updateLevelDisplay();
@@ -2117,7 +2211,7 @@ async function addExpense() {
         updateRecentTransactions();
         hideExpenseModal();
         
-        alert('✅ 지출이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+30 EXP)\n\nFirebase에 저장되었습니다.');
+        alert('✅ 지출이 추가되었습니다!\n금액: ' + amount.toLocaleString() + '원\n분류: ' + category + '\n(+30 EXP)\n\nRealtime Database에 저장되었습니다.');
         
     } catch (error) {
         console.error('지출 추가 오류:', error);
@@ -2170,14 +2264,17 @@ async function goToIndex() {
     if (currentUser && firebaseConnected) {
         try {
             await saveUserDataToFirebase();
-            console.log('페이지 이동 전 Firebase 저장 완료');
+            console.log('페이지 이동 전 Realtime Database 저장 완료');
         } catch (error) {
             console.error('페이지 이동 전 저장 오류:', error);
         }
     }
     
     stopAutoSave();
-    window.location.href = 'index.html?v=' + APP_VERSION;
+    if (priceUpdateInterval) clearInterval(priceUpdateInterval);
+    if (apiUpdateInterval) clearInterval(apiUpdateInterval);
+    
+    window.location.href = 'index.html?v=' + new Date().getTime();
 }
 
 // 모달 외부 클릭 시 닫기
@@ -2187,6 +2284,25 @@ async function goToIndex() {
             this.classList.add('hidden');
         }
     });
+});
+
+// 키보드 단축키 (gunwoo55님 전용)
+document.addEventListener('keydown', function(e) {
+    // Ctrl + D: 디버그 모드 토글
+    if (e.ctrlKey && e.key === 'd') {
+        e.preventDefault();
+        toggleDebug();
+    }
+    
+    // Ctrl + S: 수동 저장
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        if (currentUser && firebaseConnected) {
+            saveUserDataToFirebase().then(function() {
+                alert('Realtime Database에 수동 저장 완료!');
+            });
+        }
+    }
 });
 
 // 페이지 언로드 시 인터벌 정리 및 Firebase 저장
@@ -2199,11 +2315,11 @@ window.addEventListener('beforeunload', async function() {
     }
     stopAutoSave();
     
-    // 최종 Firebase 저장
+    // 최종 Realtime Database 저장
     if (currentUser && firebaseConnected) {
         try {
             await saveUserDataToFirebase();
-            console.log('페이지 언로드 전 Firebase 저장 완료');
+            console.log('페이지 언로드 전 Realtime Database 저장 완료');
         } catch (error) {
             console.error('페이지 언로드 전 저장 오류:', error);
         }
@@ -2213,7 +2329,7 @@ window.addEventListener('beforeunload', async function() {
 // 페이지 포커스/블러 이벤트 (백그라운드에서 돌아올 때 데이터 갱신)
 document.addEventListener('visibilitychange', async function() {
     if (!document.hidden && currentUser) {
-        // 페이지가 다시 활성화될 때 Firebase에서 최신 데이터 로드
+        // 페이지가 다시 활성화될 때 Realtime Database에서 최신 데이터 로드
         try {
             await loadUserDataFromFirebase();
             updateLevelDisplay();
@@ -2222,37 +2338,14 @@ document.addEventListener('visibilitychange', async function() {
             createBudgetChart();
             updateRecentTransactions();
             updateRealTimeDisplays();
-            console.log('페이지 활성화 시 Firebase 데이터 동기화 완료');
+            console.log('페이지 활성화 시 Realtime Database 데이터 동기화 완료');
         } catch (error) {
             console.error('페이지 활성화 시 동기화 오류:', error);
         }
     }
 });
 
-// Firebase 연결 상태 모니터링
-function monitorFirebaseConnection() {
-    db.enableNetwork().then(function() {
-        updateFirebaseStatus('connected', 'Firebase 연결 성공');
-    }).catch(function(error) {
-        updateFirebaseStatus('error', 'Firebase 연결 실패: ' + error.message);
-    });
-}
-
-// 네트워크 상태 모니터링
-window.addEventListener('online', function() {
-    console.log('네트워크 연결됨');
-    monitorFirebaseConnection();
-    if (currentUser) {
-        saveUserDataToFirebase();
-    }
-});
-
-window.addEventListener('offline', function() {
-    console.log('네트워크 연결 끊어짐');
-    updateFirebaseStatus('error', '네트워크 연결 없음');
-});
-
-console.log('Firebase 연동 등급 페이지 로드 완료 - gunwoo55 - 2025년 8월 9일 12:43:10 KST');
+console.log('Firebase Realtime Database 연동 등급 페이지 로드 완료 - gunwoo55 - 2025년 8월 9일 13:13:19 KST');
 </script>
 
 </body>
